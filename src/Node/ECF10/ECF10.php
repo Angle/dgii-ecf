@@ -254,8 +254,8 @@ class ECF10 extends ECFNode implements ECFInterface
         $dom = new \DOMDocument('1.0','UTF-8');
         $dom->preserveWhiteSpace = false;
 
-        $cfdiNode = $this->toDOMElement($dom);
-        $dom->appendChild($cfdiNode);
+        $ecfNode = $this->toDOMElement($dom);
+        $dom->appendChild($ecfNode);
 
         return $dom;
     }

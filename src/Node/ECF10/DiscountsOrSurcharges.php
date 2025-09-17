@@ -47,7 +47,6 @@ class DiscountsOrSurcharges extends ECFNode
     ##     CONSTRUCTOR     ##
     #########################
 
-    // constructor implemented in the CFDINode abstract class
 
     /**
      * @param DOMNode[]
@@ -60,7 +59,7 @@ class DiscountsOrSurcharges extends ECFNode
 
 
     #########################
-    ## CFDI NODE TO DOM TRANSLATION
+    ## ECF NODE TO DOM TRANSLATION
     #########################
 
     public function toDOMElement(DOMDocument $dom): DOMElement

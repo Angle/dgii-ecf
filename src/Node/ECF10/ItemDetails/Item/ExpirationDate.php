@@ -34,6 +34,10 @@ class ExpirationDate extends ECFNode
 
     protected static $children = [];
 
+    /**
+     * Must be in dd-MM-YYYY format
+     * @var
+     */
     protected $value;
 
 

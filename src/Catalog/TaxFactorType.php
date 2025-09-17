@@ -1,6 +1,6 @@
 <?php
 
-namespace Angle\CFDI\Catalog;
+namespace Angle\ECF\Catalog;
 
 use RuntimeException;
 

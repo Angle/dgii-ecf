@@ -2,7 +2,6 @@
 
 namespace Angle\ECF;
 
-use Angle\CFDI\Node\CFDI40\Complement;
 use DateTime;
 use DOMDocument;
 use DOMNode;

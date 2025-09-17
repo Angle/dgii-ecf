@@ -1,37 +1,50 @@
 <?php
 
-namespace Angle\CFDI\Catalog;
+namespace Angle\ECF\Catalog;
 
+use Angle\ECF\Catalog\TaxFactorType;
 use RuntimeException;
 
 abstract class TaxType
 {
-    const ISR     = '001';
-    const IVA     = '002';
-    const IEPS    = '003';
+    // Standard Taxes (Impuestos Estándar)
+    const ITBIS_18 = 'ITBIS1';
+    const ITBIS_16 = 'ITBIS2';
+    const ITBIS_0 = 'ITBIS3';
+    const ISR_WITHHOLDING = 'ISR';
 
     private static $map = [
-        self::ISR => [
-            'name' => 'ISR',
-            'retention' => true,
-            'transfer' => false,
-            'level' => 'federal'
+        self::ITBIS_18 => [
+            'name' => 'ITBIS Tasa 1 (18%)',
+            'shortName' => 'ITBIS 18%',
+            'description' => 'Impuesto sobre la Transferencia de Bienes Industrializados y Servicios - Tasa 1 (18%)',
+            'taxFactorType' => TaxFactorType::RATE,
+            'rate' => '18',
         ],
-        self::IVA => [
-            'name' => 'IVA',
-            'retention' => true,
-            'transfer' => true,
-            'level' => 'federal'
+        self::ITBIS_16 => [
+            'name' => 'ITBIS Tasa 2 (16%)',
+            'shortName' => 'ITBIS 16%',
+            'description' => 'Impuesto sobre la Transferencia de Bienes Industrializados y Servicios - Tasa 2 (16%)',
+            'taxFactorType' => TaxFactorType::RATE,
+            'rate' => '16',
         ],
-        self::IEPS => [
-            'name' => 'IEPS',
-            'retention' => true,
-            'transfer' => true,
-            'level' => 'federal'
+        self::ITBIS_0 => [
+            'name' => 'ITBIS Tasa 3 (0%)',
+            'shortName' => 'ITBIS 0%',
+            'description' => 'Impuesto sobre la Transferencia de Bienes Industrializados y Servicios - Tasa 3 (0%)',
+            'taxFactorType' => TaxFactorType::RATE,
+            'rate' => '0',
+        ],
+        self::ISR_WITHHOLDING => [
+            'name' => 'Retención Impuesto Sobre la Renta',
+            'shortName' => 'Retención ISR',
+            'description' => 'Monto del Impuesto Sobre la Renta correspondiente a la retención realizada de la prestación o locación de servicios.', //
+            'taxFactorType' => TaxFactorType::RATE, // The rate is variable depending on the service/good
+            'rate' => null, // Rate is not fixed
         ],
     ];
 
-    public static function listForFormBuilder($lang='es'): array
+    public static function listForFormBuilder($lang = 'es'): array
     {
         $a = [];
 
@@ -43,7 +56,7 @@ abstract class TaxType
         return $a;
     }
 
-    public static function getName($id, $lang='es'): ?string
+    public static function getName($id, $lang = 'es'): ?string
     {
         if (!self::exists($id)) {
             return null;
