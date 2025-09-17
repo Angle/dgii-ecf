@@ -94,7 +94,7 @@ class ExemptAmount extends ECFNode
     ## GETTERS AND SETTERS ##
     #########################
 
-    public function setValue(mixed $value)
+    public function setValue(string $value)
     {
         $this->value = $value;
     }
