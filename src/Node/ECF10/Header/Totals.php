@@ -180,8 +180,6 @@ class Totals extends ECFNode
         ],
     ];
 
-    private $value;
-
 
     #########################
     ##      PROPERTIES     ##

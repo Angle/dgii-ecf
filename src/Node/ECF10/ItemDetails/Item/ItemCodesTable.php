@@ -42,8 +42,6 @@ class ItemCodesTable extends ECFNode
         ],
     ];
 
-    protected $value;
-
 
     #########################
     ##      PROPERTIES     ##

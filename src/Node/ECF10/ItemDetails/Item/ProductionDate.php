@@ -91,4 +91,9 @@ class ProductionDate extends ECFNode
     #########################
     ## GETTERS AND SETTERS ##
     #########################
+
+    public function setValue(string $value)
+    {
+        $this->value = $value;
+    }
 }

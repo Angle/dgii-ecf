@@ -40,8 +40,6 @@ class AdditionalTaxesTable extends ECFNode
         ],
     ];
 
-    private $value;
-
 
     #########################
     ##      PROPERTIES     ##
@@ -64,7 +62,7 @@ class AdditionalTaxesTable extends ECFNode
     {
         foreach ($children as $node) {
             if ($node instanceof DOMText) {
-                $this->value = $node->nodeValue;
+                continue;
             }
 
             switch ($node->localName) {

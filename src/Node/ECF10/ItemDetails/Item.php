@@ -230,9 +230,6 @@ class Item extends ECFNode
     /** @var ExpirationDate|null */
     protected $expirationDate;
 
-    /** @var Mining|null */
-    protected $mining;
-
     /** @var UnitPrice */
     protected $unitPrice;
 
@@ -376,7 +373,6 @@ class Item extends ECFNode
         if ($this->referenceUnitPrice) $node->appendChild($this->referenceUnitPrice->toDOMElement($dom));
         if ($this->productionDate) $node->appendChild($this->productionDate->toDOMElement($dom));
         if ($this->expirationDate) $node->appendChild($this->expirationDate->toDOMElement($dom));
-        if ($this->mining) $node->appendChild($this->mining->toDOMElement($dom));
         if ($this->unitPrice) $node->appendChild($this->unitPrice->toDOMElement($dom));
         if ($this->discountAmount) $node->appendChild($this->discountAmount->toDOMElement($dom));
         if ($this->subDiscountTable) $node->appendChild($this->subDiscountTable->toDOMElement($dom));

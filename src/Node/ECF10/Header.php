@@ -68,7 +68,7 @@ class Header extends ECFNode
         //     'class'     => Transport::class,
         //     'type'      => ECFNode::CHILD_UNIQUE,
         // ],
-        'totales' => [
+        'totals' => [
             'keywords'  => ['Totales', 'totals'],
             'class'     => Totals::class,
             'type'      => ECFNode::CHILD_UNIQUE,

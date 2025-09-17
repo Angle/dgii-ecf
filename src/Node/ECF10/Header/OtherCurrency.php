@@ -36,8 +36,6 @@ class OtherCurrency extends ECFNode
         // PropertyName => ClassName (full namespace)
     ];
 
-    private $value;
-
 
     #########################
     ##      PROPERTIES     ##

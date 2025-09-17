@@ -66,8 +66,6 @@ class AdditionalTax extends ECFNode
         ],
     ];
 
-    private $value;
-
 
     #########################
     ##      PROPERTIES     ##

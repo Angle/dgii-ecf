@@ -94,4 +94,8 @@ class TotalItbisWithheld extends ECFNode
     ## GETTERS AND SETTERS ##
     #########################
 
+    public function setValue(mixed $value)
+    {
+        $this->value = $value;
+    }
 }
