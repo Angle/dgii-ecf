@@ -53,7 +53,7 @@ class ItemDetails extends ECFNode
     ##     CONSTRUCTOR     ##
     #########################
 
-    // constructor implemented in the CFDINode abstract class
+    // constructor implemented in the ECFNode abstract class
 
     /**
      * @param DOMNode[]
@@ -79,7 +79,7 @@ class ItemDetails extends ECFNode
 
 
     #########################
-    ## CFDI NODE TO DOM TRANSLATION
+    ## ECF NODE TO DOM TRANSLATION
     #########################
 
     public function toDOMElement(DOMDocument $dom): DOMElement

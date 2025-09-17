@@ -262,7 +262,7 @@ class Totals extends ECFNode
     ##     CONSTRUCTOR     ##
     #########################
 
-    // constructor implemented in the CFDINode abstract class
+    // constructor implemented in the ECFNode abstract class
 
     /**
      * @param DOMNode[]

@@ -179,7 +179,7 @@ class ECF10 extends ECFNode implements ECFInterface
 
 
     #########################
-    ## CFDI TO DOM TRANSLATION
+    ## ECF TO DOM TRANSLATION
     #########################
 
     public function toDOMElement(DOMDocument $dom): DOMElement
@@ -246,7 +246,7 @@ class ECF10 extends ECFNode implements ECFInterface
 
 
     #########################
-    ##      CFDI TO XML    ##
+    ##      ECF TO XML    ##
     #########################
 
     public function toDOMDocument(): DOMDocument
@@ -457,7 +457,7 @@ class ECF10 extends ECFNode implements ECFInterface
     #########################
 
     /**
-     * Clean a string whitespace according to the CFDI Spec, used for generating an original chain sequence
+     * Clean a string whitespace according to the ECF Spec, used for generating an original chain sequence
      * @param string $s
      * @return string
      */
