@@ -3,11 +3,9 @@
 namespace Angle\ECF\Catalog;
 
 use Angle\ECF\Catalog\TaxFactorType;
-use RuntimeException;
 
 abstract class TaxType
 {
-    // Standard Taxes (Impuestos Estándar)
     const ITBIS_18 = 'ITBIS1';
     const ITBIS_16 = 'ITBIS2';
     const ITBIS_0 = 'ITBIS3';
@@ -38,7 +36,7 @@ abstract class TaxType
         self::ISR_WITHHOLDING => [
             'name' => 'Retención Impuesto Sobre la Renta',
             'shortName' => 'Retención ISR',
-            'description' => 'Monto del Impuesto Sobre la Renta correspondiente a la retención realizada de la prestación o locación de servicios.', //
+            'description' => 'Monto del Impuesto Sobre la Renta correspondiente a la retención realizada de la prestación o locación de servicios.',
             'taxFactorType' => TaxFactorType::RATE, // The rate is variable depending on the service/good
             'rate' => null, // Rate is not fixed
         ],
