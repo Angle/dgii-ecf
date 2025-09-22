@@ -2,6 +2,7 @@
 
 namespace Angle\ECF\Node\ECF10;
 
+use Angle\ECF\Catalog\ECFType;
 use Angle\ECF\ECFNode;
 use Angle\ECF\ECFException;
 use Angle\ECF\ECFInterface;
@@ -299,6 +300,87 @@ class ECF10 extends ECFNode implements ECFInterface
     {
         $this->originalXml = $originalXml;
         return $this;
+    }
+
+    public function getEcfType(): ?string
+    {
+        return $this->getHeader()?->getDocId()?->getEcfType()?->getValue();
+    }
+
+    public function getEcfTypeName(): ?string
+    {
+        $ecfTypeValue = $this->getHeader()?->getDocId()?->getEcfType()?->getValue();
+        if(!$ecfTypeValue) {
+            return null;
+        }
+
+        return ECFType::getName($ecfTypeValue);
+    }
+
+    public function getEncf(): ?string
+    {
+        return $this->getHeader()?->getDocId()?->getEncf()?->getValue();
+    }
+
+    public function getSequenceExpirationDate(): ?string
+    {
+        return $this->getHeader()?-> getDocId()?->getSequenceExpirationDate()?->getValue();
+    }
+
+    public function isTaxCreditInvoice(): bool
+    {
+        return $this->getEcfType() == ECFType::TAX_CREDIT_INVOICE;
+    }
+
+    public function isCreditNote(): bool
+    {
+        return $this->getEcfType() == ECFType::CREDIT_NOTE;
+    }
+
+    public function isDebitNote(): bool
+    {
+        return $this->getEcfType() == ECFType::DEBIT_NOTE;
+    }
+
+    public function getIssuerLegalName(): ?string
+    {
+        return $this->getHeader()?->getIssuer()?->getLegalName()?->getValue();
+    }
+
+    public function getIssuerCompanyName(): ?string
+    {
+        return $this->getHeader()?->getIssuer()?->getCompanyName()?->getValue();
+
+    }
+
+    public function getIssuerBranchName(): ?string
+    {
+        return $this->getHeader()?->getIssuer()?->getBranch()?->getValue();
+    }
+
+    public function getIssuerRnc(): ?string
+    {
+        return $this->getHeader()?->getIssuer()?->getIssuerRnc()?->getValue();
+    }
+
+    public function getIssuerAddress(): ?string
+    {
+        return $this->getHeader()?->getIssuer()?->getIssuerAddress()?->getValue();
+    }
+
+    public function getIssueDate(): ?string
+    {
+        return $this->getHeader()?->getIssuer()?->getIssueDate()?->getValue();
+    }
+
+    public function getRecipientCompanyName(): ?string
+    {
+        return $this->getHeader()?->getRecipient()?->getCompanyName()?->getValue();
+    }
+
+    public function getRecipientRnc(): ?string
+    {
+        return $this->getHeader()?->getRecipient()?->getRecipientRnc()?->getValue();
     }
 
     #########################

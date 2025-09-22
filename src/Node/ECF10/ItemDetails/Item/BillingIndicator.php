@@ -23,6 +23,12 @@ class BillingIndicator extends ECFNode
 
     const NODE_NAME = "IndicadorFacturacion";
 
+    const NOT_BILLED = 0;
+    const ITBIS1 = 1;
+    const ITBIS2 = 2;
+    const ITBIS3 = 3;
+    const EXEMPT = 4;
+
     protected static $baseAttributes = [];
 
 
@@ -95,5 +101,10 @@ class BillingIndicator extends ECFNode
     public function setValue(string $value)
     {
         $this->value = $value;
+    }
+
+    public function getValue(): ?string
+    {
+        return $this->value;
     }
 }

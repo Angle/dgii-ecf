@@ -21,25 +21,25 @@ abstract class ECFType
         self::TAX_CREDIT_INVOICE => [
             'name' => [
                 'en' => 'Tax Credit Invoice',
-                'es' => 'Factura de Crédito Fiscal',
+                'es' => 'Factura de Crédito Fiscal Electrónica',
             ],
         ],
         self::CONSUMER_INVOICE => [
             'name' => [
                 'en' => 'Consumer Invoice',
-                'es' => 'Factura de Consumo',
+                'es' => 'Factura de Consumo Electrónica',
             ],
         ],
         self::DEBIT_NOTE => [
             'name' => [
                 'en' => 'Debit Note',
-                'es' => 'Nota de Débito',
+                'es' => 'Nota de Débito Electrónica',
             ],
         ],
         self::CREDIT_NOTE => [
             'name' => [
                 'en' => 'Credit Note',
-                'es' => 'Nota de Crédito',
+                'es' => 'Nota de Crédito Electrónica',
             ],
         ],
         self::PURCHASE_VOUCHER => [

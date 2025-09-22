@@ -7,6 +7,9 @@ use RuntimeException;
 
 abstract class AdditionalTaxType
 {
+    const ISC_SPECIFIC = "ISC_SPECIFIC";
+    const ISC_AD_VALOREM = "ISC_AD_VALOREM";
+
     const LEGAL_TIP = '001';
     const CDT = '002'; //Contribución al Desarrollo de las Telecomunicaciones
     const ISC_INSURANCE_SERVICES = '003';
@@ -348,5 +351,21 @@ abstract class AdditionalTaxType
     public static function exists($id): bool
     {
         return array_key_exists($id, self::$map);
+    }
+
+    public static function isISCSpecific($id): bool
+    {
+        if(!self::exists($id)) {
+            return false;
+        }
+        return self::$map[$id]['shortName'] == 'ISC Específico';
+    }
+
+    public static function isISCAdValorem($id): bool
+    {
+        if(!self::exists($id)) {
+            return false;
+        }
+        return self::$map[$id]['shortName'] == 'ISC AdValorem';
     }
 }

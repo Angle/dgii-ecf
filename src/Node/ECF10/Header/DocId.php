@@ -598,5 +598,4 @@ class DocId extends ECFNode
         $this->totalPages = $totalPages;
         return $this;
     }
-
 }

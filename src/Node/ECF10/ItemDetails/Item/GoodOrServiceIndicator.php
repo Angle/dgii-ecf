@@ -23,6 +23,9 @@ class GoodOrServiceIndicator extends ECFNode
 
     const NODE_NAME = "IndicadorBienoServicio";
 
+    const GOODS = 1;
+    const SERVICES = 2;
+
     protected static $baseAttributes = [];
 
 
@@ -95,5 +98,10 @@ class GoodOrServiceIndicator extends ECFNode
     public function setValue(string $value)
     {
         $this->value = $value;
+    }
+
+    public function getValue(): ?string
+    {
+        return $this->value;
     }
 }

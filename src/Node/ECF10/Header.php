@@ -323,13 +323,13 @@ class Header extends ECFNode
     /**
      * @return Totals
      */
-    public function getPagination(): ?Totals
+    public function getTotals(): ?Totals
     {
         return $this->totals;
     }
 
     /**
-     * @param Totals $totals
+     * @param Totals|null $totals
      * @return Header
      */
     public function setTotals(?Totals $totals): self
@@ -337,6 +337,24 @@ class Header extends ECFNode
         $this->totals = $totals;
         return $this;
     }
+
+    // /**
+    //  * @return Pagination
+    //  */
+    // public function getPagination(): ?Pagination
+    // {
+    //     return $this->pagination;
+    // }
+
+    // /**
+    //  * @param Pagination|null $pagination
+    //  * @return Header
+    //  */
+    // public function setPagination(?Pagination $pagination): self
+    // {
+    //     $this->pagination = $pagination;
+    //     return $this;
+    // }
 
     /**
      * @return OtherCurrency|null

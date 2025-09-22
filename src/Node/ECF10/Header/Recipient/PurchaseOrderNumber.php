@@ -98,4 +98,9 @@ class PurchaseOrderNumber extends ECFNode
     {
         $this->value = $value;
     }
+
+    public function getValue(): ?string
+    {
+        return $this->value;
+    }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Angle\ECF\Node\ECF10\ItemDetails\Item\Retention;
+namespace Angle\ECF\Node\ECF10\ItemDetails\Item\AdditionalTaxTable\AdditionalTax;
 
 use Angle\ECF\ECFNode;
 use Angle\ECF\ECFException;
@@ -9,13 +9,9 @@ use DOMElement;
 use DOMNode;
 use DOMText;
 
-class RetentionOrPerceptionAgentIndicator extends ECFNode
+class OtherAdditionalTaxes extends ECFNode
 {
-    const NODE_NAME = "IndicadorAgenteRetencionoPercepcion";
-
-    const RETENTION = "R";
-    const PERCEPTION = "P";
-
+    const NODE_NAME = "OtrosImpuestosAdicionales";
     protected static $baseAttributes = [];
     protected static $attributes = [];
     protected static $children = [];

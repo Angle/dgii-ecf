@@ -63,6 +63,15 @@ abstract class TaxType
         return self::$map[$id]['name'];
     }
 
+    public static function getRate($id, $lang = 'es'): ?string
+    {
+        if (!self::exists($id)) {
+            return null;
+        }
+
+        return self::$map[$id]['rate'];
+    }
+
     public static function exists($id): bool
     {
         return array_key_exists($id, self::$map);
