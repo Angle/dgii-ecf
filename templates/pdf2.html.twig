@@ -1,0 +1,78 @@
+<html>
+<head>
+  <style>
+    body { font-family: sans-serif; font-size: 10pt; }
+    h1 { color: #005baa; }
+    table.items { border-collapse: collapse; width: 100%; margin-top: 15px; }
+    table.items th, table.items td { border: 1px solid #444; padding: 5px; text-align: right; }
+    table.items th { background: #eee; }
+    .totals { margin-top: 15px; float: right; border: 1px solid #444; }
+    .totals td { padding: 5px; }
+  </style>
+</head>
+<body>
+
+<table width="100%" style="border-spacing: 0; border-collapse: collapse; table-layout: fixed;">
+  <tr>
+    <td width="50%" style="overflow: hidden; text-align: left;">
+    {% if logo is not null %}
+        <img src="{{logo}}" height="50" width="150">
+    {% endif %}
+    <h1>COMERCIAL ZYL</h1>
+      ZYL, SRL<br>
+      Sucursal Gascue<br>
+      RNC 101000001<br>
+      <small>Dirección: Calle Segunda #01, Gascue, Distrito Nacional, Rep. Dom.xxxxxxxxxxxxxasdldlkjdalskdjalsdkjasldkasdjlk</small>
+    </td>
+    <td width="50%" style="overflow: hidden; text-align: right;">
+      <h2>Factura de Crédito Fiscal Electrónica</h2>
+      <b>e-NCF:</b> E310000000001<br>
+      <b>Fecha Emisión:</b> 27-01-2020<br>
+      <b>Fecha Vencimiento:</b> 31-12-2021
+    </td>
+  </tr>
+</table>
+
+<hr>
+
+<b>Razón Social Cliente:</b> COMERCIO, SRL<br>
+<b>RNC Cliente:</b> 130000001
+
+<table class="items">
+  <thead>
+    <tr>
+      <th>Cantidad</th>
+      <th style="text-align:left;">Descripción</th>
+      <th>Unidad</th>
+      <th>Precio</th>
+      <th>ITBIS</th>
+      <th>Valor</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>150</td><td style="text-align:left;">Zapatos</td><td>CAJ</td><td>550.00</td><td>14,850.00</td><td>82,500.00</td>
+    </tr>
+    <tr>
+      <td>200</td><td style="text-align:left;">Vestidos</td><td>PZA</td><td>800.00</td><td>28,800.00</td><td>160,000.00</td>
+    </tr>
+    <tr>
+      <td>100</td><td style="text-align:left;">Camisas</td><td>PZA</td><td>500.00</td><td>9,000.00</td><td>50,000.00</td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="totals">
+  <tr><td>Subtotal Gravado:</td><td>334,300.00</td></tr>
+  <tr><td>Total ITBIS:</td><td>60,174.00</td></tr>
+  <tr><td><b>Total:</b></td><td><b>394,474.00</b></td></tr>
+</table>
+
+<p style="margin-top:100px;">
+  {# <img src="qr.png" width="100"><br> #}
+  Código de Seguridad: S/DQdu<br>
+  Fecha Firma: 27-01-2025 18:24:07
+</p>
+
+</body>
+</html>

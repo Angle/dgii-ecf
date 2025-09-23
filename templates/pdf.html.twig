@@ -1,0 +1,121 @@
+<html>
+    <head>
+        <style>
+        body { font-family: sans-serif; font-size: 10pt; }
+        h1 { color: #005baa; }
+        hr { color: #005baa; }
+        table.items { border-collapse: collapse; margin-top: 15px; }
+        table.items th, table.items td { border: 1px solid #444; padding: 6px; text-align: right; }
+        table.items th { background: #eee; }
+        .totals td {  }
+        </style>
+    </head>
+    <body>
+
+    <table style="width: 193mm;">
+        <tr>
+            {# top left header #}
+            <td style="width: 75mm;">
+                {% if logo is not null %}
+                    <img src="{{logo}}" height="50">
+                {% endif %}
+                {% if ecf.issuerLegalName is not null %}
+                    <h1> {{ ecf.issuerLegalName }} </h1>
+                {% else %}
+                    <br>
+                {% endif %}
+                {{ ecf.issuerCompanyName }}<br>
+                {% if ecf.branchName is not null %}
+                    Sucursal {{ ecf.branchName }} <br>
+                {% endif %}
+                RNC {{ ecf.issuerRnc }}<br>
+                <small><b>Dirección:</b> {{ ecf.issuerAddress }}</small><br>
+                {% if ecf.issueDate is not null %}
+                    <b>Fecha Emisión:</b> {{ ecf.issueDate }}<br>
+                {% endif %}
+            </td>
+            {# top right header #}
+            <td style="width: 118mm; text-align: right;">
+                <h2>{{ ecf.ecfTypeName }}</h2>
+                <b>e-NCF:</b> {{ ecf.encf }}<br>
+                {% if ecf.isTaxCreditInvoice %}
+                    <b>Fecha Vencimiento:</b> {{ ecf.sequenceExpirationDate }} <br>
+                {% endif %}
+                {% if ecf.isTaxCreditInvoice or ecf.isDebitNote %}
+                    {# TODO: Modified ENCF in case of credit notes and debit notes #}
+                    {# TODO: Modification Type in case of credit notes and debit notes #}
+                {% endif %}
+            </td>
+        </tr>
+    </table><br>
+
+    <hr><br>
+
+    <b>Razón Social Cliente:</b> {{ ecf.recipientCompanyName }}<br>
+    <b>RNC Cliente:</b> {{ ecf.recipientRnc }}<br><br>
+
+    <hr><br>
+
+    <table class="items">
+        <thead>
+            <tr>
+                {% for ih in itemHeaders %}
+                    <th style="width:{{ih.size}}mm; text-align:center;">{{ih.name}}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+                <tr>
+                    {% for fieldName, fieldValue in item %}
+                        {% set size = itemHeaders[fieldName].size %}
+                        {% set align = itemHeaders[fieldName].textAlign %}
+                        <td style="width:{{size}}mm; text-align:{{align}};">{{fieldValue|default("-")}}</td>
+                    {% endfor %}
+                    {# <td style="width:11mm; text-align:center;">150</td>
+                    <td style="width:30mm; text-align:left;">Presidente Light 16/650 ML 22 Onz.</td>
+                    <td style="width:10mm; text-align:center;">CAJ</td>
+                    <td style="width:8mm; text-align:right;">4.30%</td>
+                    <td style="width:6mm; text-align:right;">200.0</td>
+                    <td style="width:13mm; text-align:right;">111,550.00</td>
+                    <td style="width:11mm; text-align:right;">273.94</td>
+                    <td style="width:11mm; text-align:right;">21,744.78</td>
+                    <td style="width:12mm; text-align:right;">14,850.00</td>
+                    <td style="width:16mm; text-align:right;">2,182,500.00</td> #}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <br><hr><br>
+    <table style = "">
+        <tr>
+            <td style="width: 120mm; ">
+            <qrcode value="www.text.com" ec="M" style="width: 30mm; background-color: white; color: black; border:none;"></qrcode><br>
+                Código de Seguridad: S/DQdu<br>
+                Fecha Firma: 27-01-2025 18:24:07
+            </td>
+            <td style="width: 73mm; vertical-align:top;">
+                <table class="totals" style="">
+                    <tr>
+                        <td style="width: 30mm; text-align:right;">Subtotal Gravado:</td>
+                        <td style="width: 43mm;border: 1px solid #444; text-align:right;background: #eee;">334,300.00</td>
+                    </tr>
+                    <tr>
+                        <td style="width: 30mm; text-align:right;">Total ITBIS:</td>
+                        <td style="width: 43mm;border: 1px solid #444; text-align:right;background: #eee;">60,174.00</td>
+                    </tr>
+                    <tr>
+                        <td style="width: 30mm; text-align:right;"><b>Total:</b></td>
+                        <td style="width: 43mm;border: 1px solid #444; text-align:right;background: #eee;"><b>394,474.00</b></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <p style="margin-top:100px;">
+
+    </p>
+
+    </body>
+</html>
