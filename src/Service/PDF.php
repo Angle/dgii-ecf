@@ -100,8 +100,59 @@ class PDF
      */
     public function build(ECF10 $ecf, ?string $logoFilePath = null): string
     {
+        //First we get the raw items matrix from the ecf item details
+        $itemsMatrix = $this->calculateItemsMatrix($ecf);
+
+        //Then from that items matrix we get the header matrix and the items matrix ONLY for the used headers
+        [$headerMatrix, $itemsMatrix] = $this->getHeadersAndFilteredItemsMatrix($itemsMatrix);
+
+        //Then we adjust the size fields of the headerMatrix according to the headerMatrix
+        $headerMatrix = $this->adjustHeaderSizes($headerMatrix);
+
+        //Then we calculate totals.
+        $totals = $this->calculateTotals($ecf);
+
+        //Render the html
+        $html = $this->twig->render('pdf.html.twig', [
+            'ecf'   => $ecf,
+            'logo' => $logoFilePath,
+            'items' => $itemsMatrix,
+            'itemHeaders' => $headerMatrix,
+            'totals' => $totals
+        ]);
+
+        //Turn the html into pdf content
+        try {
+            $html2pdf = new Html2Pdf('P', 'LETTER', 'es', true, "UTF-8", [8, 5, 8, 5]);
+            $html2pdf->pdf->SetDisplayMode('real');
+            $html2pdf->setTestIsImage(true);
+            $html2pdf->writeHTML($html);
+            $filename = ''; // filename is ignored when exporting as string
+            $pdfContent = $html2pdf->output($filename, 'S'); // Dest: 'S' means String
+        } catch (Exception $e) {
+            // PDF building error..
+            $this->error = [
+                'type' => 'pdf',
+                'code' => -1,
+                'msg' => $e->getMessage(),
+            ];
+            return false;
+        }
+
+        //Return the pdf content
+        return $pdfContent;
+    }
+
+    public function getLastError()
+    {
+        return $this->error;
+    }
+
+    private function calculateItemsMatrix(ECF10 $ecf) {
+
         //Prepare item matrix for the table.
         $itemsMatrix = [];
+
         foreach($ecf->getItemDetails()->getItems() as $item)
         {
             //Initialize the item with all header keys
@@ -158,7 +209,11 @@ class PDF
             $i[self::AMOUNT] = $item->getItemAmount()->getValue();
             $itemsMatrix[] = $i;
         }
+        return $itemsMatrix;
+    }
 
+    private function getHeadersAndFilteredItemsMatrix(array $itemsMatrix):array
+    {
         //We remove the non existing headers.
         //As long as an item does have the header present, we count the header.
         //This can leave fields null which we will fill with "-" on rendering side.
@@ -195,16 +250,18 @@ class PDF
             $filteredItemsMatrix[] = $item;
         }
         $itemsMatrix = $filteredItemsMatrix;
+        return [$headerMatrix, $filteredItemsMatrix];
+    }
 
-        unset($filteredItemsMatrix);
-
+    private function adjustHeaderSizes(array $headerMatrix): array
+    {
         //At this point we should have a items matrix where all items have all the headers used in same order and null where null
 
         //Now adjust description column to fit width
         //We add 7 px per column to account for 6px of padding + 1 of border.
         //We also add the size for each header
         $totalSize = 1;
-        $totalSize += (count($existingHeaders) * 7);
+        $totalSize += (count($headerMatrix) * 7);
         foreach ($headerMatrix as $key => $props) {
             $totalSize += $props["size"];
         }
@@ -214,11 +271,13 @@ class PDF
         //Adjust the size
         $headerMatrix[self::DESCRIPTION]["size"] += $difference;
 
+        return $headerMatrix;
+    }
 
-
+    private function calculateTotals(ECF10 $ecf)
+    {
         $totals = [];
 
-        //totals:
         if($ecf->getHeader()->getTotals()->getTotalTaxableAmount()) {
             $totals['totalTaxableAmount'] = $ecf->getHeader()->getTotals()->getTotalTaxableAmount()->getValue();
         }
@@ -228,42 +287,13 @@ class PDF
         if($ecf->getHeader()->getTotals()->getTotalItbis()) {
             $totals['totalExemptAmount'] = $ecf->getHeader()->getTotals()->getTotalItbis()->getValue();
         }
+
         //isc total
         //cdt total
         //tip total
         //dscount total
         //chargers total
 
-
-        $html = $this->twig->render('pdf.html.twig', [
-            'ecf'   => $ecf,
-            'logo' => $logoFilePath,
-            'items' => $itemsMatrix,
-            'itemHeaders' => $headerMatrix,
-            'totals' => $totals
-        ]);
-
-        try {
-            $html2pdf = new Html2Pdf('P', 'LETTER', 'es', true, "UTF-8", [8, 5, 8, 5]);
-            $html2pdf->pdf->SetDisplayMode('real');
-            $html2pdf->setTestIsImage(true);
-            $html2pdf->writeHTML($html);
-            $filename = ''; // filename is ignored when exporting as string
-            $pdfContent = $html2pdf->output($filename, 'S'); // Dest: 'S' means String
-        } catch (Exception $e) {
-            // PDF building error..
-            $this->error = [
-                'type' => 'pdf',
-                'code' => -1,
-                'msg' => $e->getMessage(),
-            ];
-            return false;
-        }
-        return $pdfContent;
-    }
-
-    public function getLastError()
-    {
-        return $this->error;
+        return $totals;
     }
 }
