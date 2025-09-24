@@ -72,16 +72,6 @@
                         {% set align = itemHeaders[fieldName].textAlign %}
                         <td style="width:{{size}}mm; text-align:{{align}};">{{fieldValue|default("-")}}</td>
                     {% endfor %}
-                    {# <td style="width:11mm; text-align:center;">150</td>
-                    <td style="width:30mm; text-align:left;">Presidente Light 16/650 ML 22 Onz.</td>
-                    <td style="width:10mm; text-align:center;">CAJ</td>
-                    <td style="width:8mm; text-align:right;">4.30%</td>
-                    <td style="width:6mm; text-align:right;">200.0</td>
-                    <td style="width:13mm; text-align:right;">111,550.00</td>
-                    <td style="width:11mm; text-align:right;">273.94</td>
-                    <td style="width:11mm; text-align:right;">21,744.78</td>
-                    <td style="width:12mm; text-align:right;">14,850.00</td>
-                    <td style="width:16mm; text-align:right;">2,182,500.00</td> #}
                 </tr>
             {% endfor %}
         </tbody>
@@ -96,7 +86,13 @@
             </td>
             <td style="width: 73mm; vertical-align:top;">
                 <table class="totals" style="">
-                    <tr>
+                    {% for entry in totals %}
+                        <tr>
+                            <td style="width: 30mm; text-align:right;"><b>{{entry.name}}:</b></td>
+                            <td style="width: 43mm;border: 1px solid #444; text-align:right;background: #eee;">{{entry.value}}</td>
+                        </tr>
+                    {% endfor %}
+                    {# <tr>
                         <td style="width: 30mm; text-align:right;">Subtotal Gravado:</td>
                         <td style="width: 43mm;border: 1px solid #444; text-align:right;background: #eee;">334,300.00</td>
                     </tr>
@@ -107,15 +103,10 @@
                     <tr>
                         <td style="width: 30mm; text-align:right;"><b>Total:</b></td>
                         <td style="width: 43mm;border: 1px solid #444; text-align:right;background: #eee;"><b>394,474.00</b></td>
-                    </tr>
+                    </tr> #}
                 </table>
             </td>
         </tr>
     </table>
-
-    <p style="margin-top:100px;">
-
-    </p>
-
     </body>
 </html>

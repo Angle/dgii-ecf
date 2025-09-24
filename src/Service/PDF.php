@@ -1,6 +1,7 @@
 <?php
 namespace Angle\ECF\Service;
 
+use Angle\ECF\Catalog\AdditionalTaxType;
 use Angle\ECF\Catalog\ECFType;
 use Angle\ECF\Catalog\TaxType;
 use Angle\ECF\Catalog\UnitType;
@@ -153,11 +154,11 @@ class PDF
         //Prepare item matrix for the table.
         $itemsMatrix = [];
 
-        foreach($ecf->getItemDetails()->getItems() as $item)
+        foreach ($ecf->getItemDetails()->getItems() as $item)
         {
             //Initialize the item with all header keys
             $i = [];
-            foreach($this->headers as $key => $props)
+            foreach ($this->headers as $key => $props)
             {
                 $i[$key] = null;
             }
@@ -185,12 +186,12 @@ class PDF
             }
             $i[self::PRICE] = $item->getUnitPrice()->getValue();
 
-            if($item->getAdditionalTaxTable()) {
-                foreach($item->getAdditionalTaxTable()->getAdditionalTaxes() as $at) {
-                    if($at->getSpecificConsumptionTaxAmount()) {
+            if ($item->getAdditionalTaxTable()) {
+                foreach ($item->getAdditionalTaxTable()->getAdditionalTaxes() as $at) {
+                    if ($at->getSpecificConsumptionTaxAmount()) {
                         $i[self::ISC_SPECIFIC] = $at->getSpecificConsumptionTaxAmount()->getValue();
                     }
-                    if($at->getAdValoremConsumptionTaxAmount()) {
+                    if ($at->getAdValoremConsumptionTaxAmount()) {
                         $i[self::ISC_AD_VALOREM] = $at->getAdValoremConsumptionTaxAmount()->getValue();
                     }
                 }
@@ -243,7 +244,7 @@ class PDF
         $filteredItemsMatrix = [];
         foreach ($itemsMatrix as $i => $item) {
             foreach ($item as $key => $props) {
-                if(!array_key_exists($key, $headerMatrix)) {
+                if (!array_key_exists($key, $headerMatrix)) {
                     unset($item[$key]);
                 }
             }
@@ -278,21 +279,87 @@ class PDF
     {
         $totals = [];
 
-        if($ecf->getHeader()->getTotals()->getTotalTaxableAmount()) {
-            $totals['totalTaxableAmount'] = $ecf->getHeader()->getTotals()->getTotalTaxableAmount()->getValue();
+        if ($ecf->getHeader()->getTotals()->getTotalTaxableAmount()) {
+            $totals[] = [
+                'name' => 'Subtotal Gravado',
+                'value' => $ecf->getHeader()->getTotals()->getTotalTaxableAmount()->getValue(),
+            ];
         }
-        if($ecf->getHeader()->getTotals()->getExemptAmount()) {
-            $totals['totalExemptAmount'] = $ecf->getHeader()->getTotals()->getExemptAmount()->getValue();
+        if ($ecf->getHeader()->getTotals()->getExemptAmount()) {
+            $totals[] = [
+                'name' => 'Subtotal Exento',
+                'value' => $ecf->getHeader()->getTotals()->getExemptAmount()->getValue(),
+            ];
         }
-        if($ecf->getHeader()->getTotals()->getTotalItbis()) {
-            $totals['totalExemptAmount'] = $ecf->getHeader()->getTotals()->getTotalItbis()->getValue();
+        if ($ecf->getHeader()->getTotals()->getTotalItbis()) {
+            $totals[] = [
+                'name' => 'Total ITBIS',
+                'value' => $ecf->getHeader()->getTotals()->getTotalItbis()->getValue(),
+            ];
         }
 
-        //isc total
-        //cdt total
-        //tip total
-        //dscount total
-        //chargers total
+        //Calculate other totals from totals - additional tax table
+        if ($ecf->getHeader()->getTotals()->getAdditionalTaxesTable()) {
+            $iscTotal = 0;
+            $cdtTotal = 0;
+            $tipTotal = 0;
+            $otherTotal = 0;
+
+            foreach ($ecf->getHeader()->getTotals()->getAdditionalTaxesTable()->getAdditionalTaxes() as $additionalTax) {
+                if ($additionalTax->getSpecificConsumptionTaxAmount()) {
+                    $iscTotal += $additionalTax->getSpecificConsumptionTaxAmount()->getValue();
+                }
+                if ($additionalTax->getAdValoremConsumptionTaxAmount()) {
+                    $iscTotal += $additionalTax->getAdValoremConsumptionTaxAmount()->getValue();
+                }
+                if ($additionalTax->getOtherAdditionalTaxes()) {
+                    switch ($additionalTax->getTaxType()->getValue()) {
+                        case AdditionalTaxType::LEGAL_TIP:
+                            $tipTotal += $additionalTax->getOtherAdditionalTaxes()->getValue();
+                            break;
+                        case AdditionalTaxType::CDT:
+                            $cdtTotal += $additionalTax->getOtherAdditionalTaxes()->getValue();
+                            break;
+                        default:
+                            $otherTotal *= $additionalTax->getOtherAdditionalTaxes()->getValue();
+                            break;
+                    }
+                }
+            }
+            if($iscTotal != 0) {
+                $totals[] = [
+                    'name' => 'Total ISC',
+                    'value' => $iscTotal,
+                ];
+            }
+            if($cdtTotal != 0) {
+                $totals[] = [
+                    'name' => 'CDT',
+                    'value' => $cdtTotal,
+                ];
+            }
+            if($tipTotal != 0) {
+                $totals[] = [
+                    'name' => 'Propina Legal',
+                    'value' => $tipTotal,
+                ];
+            }
+            if($otherTotal != 0) {
+                $totals[] = [
+                    'name' => 'Otros Impuestos',
+                    'value' => $otherTotal,
+                ];
+            }
+
+        }
+
+        //TODO: discountTotal
+        //TODO: echargesTotal
+
+        $totals[] = [
+            'name' => 'Total',
+            'value' => $ecf->getHeader()->getTotals()->getTotalAmount()->getValue(),
+        ];
 
         return $totals;
     }
