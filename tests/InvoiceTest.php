@@ -26,12 +26,24 @@ use Angle\ECF\Node\ECF10\Header\Totals\TotalItbisT1;
 use Angle\ECF\Node\ECF10\Header\Version;
 use Angle\ECF\Node\ECF10\ItemDetails;
 use Angle\ECF\Node\ECF10\ItemDetails\Item;
+use Angle\ECF\Node\ECF10\ItemDetails\Item\AdditionalTaxTable;
+use Angle\ECF\Node\ECF10\ItemDetails\Item\AdditionalTaxTable\AdditionalTax;
+use Angle\ECF\Node\ECF10\ItemDetails\Item\AdditionalTaxTable\AdditionalTax\TaxType;
+use Angle\ECF\Node\ECF10\ItemDetails\Item\AlcoholPercentage;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\BillingIndicator;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\GoodOrServiceIndicator;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\ItemAmount;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\ItemName;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\ItemQuantity;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\LineNumber;
+use Angle\ECF\Node\ECF10\ItemDetails\Item\ReferenceQuantity;
+use Angle\ECF\Node\ECF10\ItemDetails\Item\ReferenceUnit;
+use Angle\ECF\Node\ECF10\ItemDetails\Item\ReferenceUnitPrice;
+use Angle\ECF\Node\ECF10\ItemDetails\Item\SubquantityTable;
+use Angle\ECF\Node\ECF10\ItemDetails\Item\SubquantityTable\SubquantityItem;
+use Angle\ECF\Node\ECF10\ItemDetails\Item\SubquantityTable\SubquantityItem\Subquantity;
+use Angle\ECF\Node\ECF10\ItemDetails\Item\SubquantityTable\SubquantityItem\SubquantityCode;
+use Angle\ECF\Node\ECF10\ItemDetails\Item\UnitOfMeasure;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\UnitPrice;
 use PHPUnit\Framework\TestCase;
 
@@ -75,17 +87,6 @@ final class InvoiceTest extends TestCase
                     // Legal name of the buyer. Mandatory for type 31.
                     RecipientCompanyName::NODE_NAME => ['value' => 'EMPRESA COMPRADORA SRL'],
                 ],
-                // Subsection: Invoice Totals.
-                Totals::NODE_NAME => [
-                    // Subtotal for items taxed at ITBIS Rate 1 (18%).
-                    TaxableAmountT1::NODE_NAME => ['value' => '450.00'],
-                    // Tax rate for ITBIS Rate 1.
-                    ItbisT1::NODE_NAME => ['value' => '18'],
-                    // Total calculated ITBIS for Rate 1 (450.00 * 0.18).
-                    TotalItbisT1::NODE_NAME => ['value' => '81.00'],
-                    // Grand total (MontoGravadoI1 + TotalITBIS1). Mandatory.
-                    TotalAmount::NODE_NAME => ['value' => '531.00'],
-                ],
             ],
             // Section B: DetallesItems - Line items of the invoice.
             ItemDetails::NODE_NAME => [
@@ -115,6 +116,40 @@ final class InvoiceTest extends TestCase
                         GoodOrServiceIndicator::NODE_NAME => ['value' => '1'],
                         ItemQuantity::NODE_NAME => ['value' => '5.00'],
                         UnitPrice::NODE_NAME => ['value' => '50.00'],
+                        ItemAmount::NODE_NAME => ['value' => '250.00'],
+                    ],
+                    [
+                        LineNumber::NODE_NAME => ['value' => '3'],
+                        BillingIndicator::NODE_NAME => ['value' => '1'],
+                        ItemName::NODE_NAME => ['value' => 'Presidente Light 16/850 ML 22 Onz.'],
+                        GoodOrServiceIndicator::NODE_NAME => ['value' => '1'],
+                        ItemQuantity::NODE_NAME => ['value' => '1'],
+                        UnitOfMeasure::NODE_NAME => ['value' => '31'],
+                        ReferenceQuantity::NODE_NAME => ['value' => '16.00'],
+                        ReferenceUnit::NODE_NAME => ['value' => '43'],
+                        SubquantityTable::NODE_NAME => [
+                            SubquantityItem::NODE_NAME =>
+                            [
+                                [
+                                    Subquantity::NODE_NAME => ['value' => '.65'],
+                                    SubquantityCode::NODE_NAME => ['value' => '24'],
+                                ]
+                            ]
+                        ],
+                        AlcoholPercentage::NODE_NAME => ['value' => '4.30'],
+                        ReferenceUnitPrice::NODE_NAME => ['value' => '80.00'],
+                        UnitPrice::NODE_NAME => ['value' => '1063.97'],
+                        AdditionalTaxTable::NODE_NAME => [
+                            AdditionalTax::NODE_NAME => [
+                                [
+                                    TaxType::NODE_NAME => ['value' => '014'],
+                                ],
+                                [
+                                    TaxType::NODE_NAME => ['value' => '031'],
+                                ],
+                            ]
+
+                        ],
                         ItemAmount::NODE_NAME => ['value' => '250.00'],
                     ],
                 ],

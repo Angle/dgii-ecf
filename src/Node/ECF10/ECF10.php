@@ -378,9 +378,15 @@ class ECF10 extends ECFNode implements ECFInterface
 
                                 //TasaImpuestoAdicional * GradosAlcohol * CantidadReferencia * Subcantidad * CantidadItem
                                 //Ignore subcantidad for now
-                                $amount = Math::mul(AdditionalTaxType::getRate($taxType), $item->getAlcoholPercentage()->getValue());
+                                $amount = Math::mul(AdditionalTaxType::getRate($taxType), Math::div($item->getAlcoholPercentage()->getValue(),100));
                                 $amount = Math::mul($amount, $item->getReferenceQuantity()->getValue());
                                 $amount = Math::mul($amount, $item->getItemQuantity()->getValue());
+
+                                if ($item?->getSubquantityTable()?->getSubquantityItems()) {
+                                    foreach ($item->getSubquantityTable()->getSubquantityItems() as $subquantityItem) {
+                                        $amount = Math::mul($amount, $subquantityItem->getSubquantity()->getValue());
+                                    }
+                                }
                                 $amount = Math::round($amount,2);
 
                                 $additionalTax->setSpecificConsumptionTaxAmount(SpecificConsumptionTaxAmount::newWithValue($amount));
@@ -419,13 +425,20 @@ class ECF10 extends ECFNode implements ECFInterface
                                     $rupWithoutItbis = Math::div($item->getReferenceUnitPrice()->getValue(), Math::add(1, CatalogTaxType::getRate(CatalogTaxType::ITBIS_1)));
 
                                     //1.1 Get ISCEspecificoMonto (this can be sent somewhere else)
-                                    $iscSpecific = Math::mul(AdditionalTaxType::getRate($taxType), $item->getAlcoholPercentage()->getValue());
+                                    $iscSpecific = Math::mul(AdditionalTaxType::getRate(AdditionalTaxType::getMatchingSpecificTaxType($taxType)), Math::div($item->getAlcoholPercentage()->getValue(),100));
                                     $iscSpecific = Math::mul($iscSpecific, $item->getReferenceQuantity()->getValue());
                                     $iscSpecific = Math::mul($iscSpecific, $item->getItemQuantity()->getValue());
+
+                                    if ($item?->getSubquantityTable()?->getSubquantityItems()) {
+                                        foreach ($item->getSubquantityTable()->getSubquantityItems() as $subquantityItem) {
+                                            $iscSpecific = Math::mul($iscSpecific, $subquantityItem->getSubquantity()->getValue());
+                                        }
+                                    }
+
                                     $iscSpecific = Math::round($iscSpecific,2);
 
                                     //1.2 Get ISCEspecifico per unit
-                                    $iscSpecificPerUnit = Math::div($iscSpecific, Math::mul($item->getItemQuantity()->getValue(), $item->getReferenceUnit()->getValue()));
+                                    $iscSpecificPerUnit = Math::div($iscSpecific, Math::mul($item->getItemQuantity()->getValue(), $item->getReferenceQuantity()->getValue()));
 
                                     //2.  "1" - matching Specific ISC Amount Per Unit. This removes the iscSpecific from the reference unit price
                                     $rupWithoutItbisAndSpecific = Math::sub($rupWithoutItbis, $iscSpecificPerUnit);
@@ -439,6 +452,8 @@ class ECF10 extends ECFNode implements ECFInterface
                                     //5.  "4" * ItemQuantity * referenceQuantity. This calculates the total ad valorem tax
                                     $amount = Math::mul($adValoremTaxPerUnit, $item->getItemQuantity()->getValue());
                                     $amount = Math::mul($amount, $item->getReferenceQuantity()->getValue());
+
+                                    $amount = Math::round($amount, 2);
 
                                     $additionalTax->setAdValoremConsumptionTaxAmount(AdValoremConsumptionTaxAmount::newWithValue($amount));
                                     $additionalTaxesAmount = Math::add($additionalTaxesAmount, $amount);
