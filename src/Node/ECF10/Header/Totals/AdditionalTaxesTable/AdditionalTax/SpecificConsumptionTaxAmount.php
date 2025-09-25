@@ -63,6 +63,19 @@ class SpecificConsumptionTaxAmount extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): SpecificConsumptionTaxAmount
+    {
+        $specificConsumptionTaxAmount = new SpecificConsumptionTaxAmount([]);
+        $specificConsumptionTaxAmount->setValue($value);
+
+        return $specificConsumptionTaxAmount;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

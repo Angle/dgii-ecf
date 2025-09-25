@@ -2,11 +2,21 @@
 
 namespace Angle\ECF\Node\ECF10;
 
+use Angle\ECF\Catalog\AdditionalTaxType;
 use Angle\ECF\Catalog\ECFType;
+use Angle\ECF\Catalog\TaxType as CatalogTaxType;
+use Angle\ECF\Catalog\UnitType;
 use Angle\ECF\ECFNode;
 use Angle\ECF\ECFException;
 use Angle\ECF\ECFInterface;
-
+use Angle\ECF\Node\ECF10\Header\Totals;
+use Angle\ECF\Node\ECF10\Header\Totals\AdditionalTaxesTable\AdditionalTax;
+use Angle\ECF\Node\ECF10\Header\Totals\AdditionalTaxesTable\AdditionalTax\AdditionalTaxRate;
+use Angle\ECF\Node\ECF10\Header\Totals\AdditionalTaxesTable\AdditionalTax\AdValoremConsumptionTaxAmount;
+use Angle\ECF\Node\ECF10\Header\Totals\AdditionalTaxesTable\AdditionalTax\SpecificConsumptionTaxAmount;
+use Angle\ECF\Node\ECF10\Header\Totals\AdditionalTaxesTable\AdditionalTax\TaxType as AdditionalTaxTaxType;
+use Angle\ECF\Node\ECF10\ItemDetails\Item\AdditionalTaxTable\AdditionalTax\TaxType;
+use Angle\ECF\Node\ECF10\ItemDetails\Item\BillingIndicator;
 use DOMDocument;
 use DOMElement;
 use DOMNode;
@@ -283,6 +293,192 @@ class ECF10 extends ECFNode implements ECFInterface
     #########################
     ##   SPECIAL METHODS   ##
     #########################
+
+    //Calculate taxes and totals from the items
+    public function calculateTotals()
+    {
+        //TODO: Throw exceptions
+        if (!$this->getItemDetails()) {
+            return;
+        }
+        if (!$this->getItemDetails()->getItems()) {
+            return;
+        }
+        if (count($this->getItemDetails()->getItems()) == 0) {
+            return;
+        }
+
+        //TODO: Account for recharges and discounts
+
+        $this->getHeader()->setTotals(new Totals([]));
+
+        $itbis1TaxableAmount = 0;
+        $itbis2TaxableAmount = 0;
+        $itbis3TaxableAmount = 0;
+        $exemptAmount = 0;
+        $nonBilledAmount = 0;
+
+        $additionalTaxes = [];
+        foreach ($this->getItemDetails()->getItems() as $item) {
+            switch ($item->getBillingIndicator()->getValue()) {
+                case BillingIndicator::NOT_BILLED:
+                    $nonBilledAmount = bcadd($nonBilledAmount, $item->getItemAmount()->getValue());
+                    break;
+                case BillingIndicator::ITBIS1:
+                    $itbis1TaxableAmount = bcadd($itbis1TaxableAmount, $item->getItemAmount()->getValue());
+                    break;
+                case BillingIndicator::ITBIS2:
+                    $itbis2TaxableAmount = bcadd($itbis2TaxableAmount, $item->getItemAmount()->getValue());
+                    break;
+                case BillingIndicator::ITBIS3:
+                    $itbis3TaxableAmount = bcadd($itbis3TaxableAmount, $item->getItemAmount()->getValue());
+                    break;
+                case BillingIndicator::EXEMPT:
+                    $exemptAmount = bcadd($exemptAmount, $item->getItemAmount()->getValue());
+                    break;
+            }
+
+            //Process other taxes
+            $additionalTaxesAmount = 0;
+            //Create a total/additionalTax for each itemdetails/additionalTax
+            if ($item->getAdditionalTaxTable() && $item->getAdditionalTaxTable()->getAdditionalTaxes()) {
+                foreach ($item->getAdditionalTaxTable()->getAdditionalTaxes() as $at) {
+                    //TODO: Send this logic to additionalTax maybe
+
+                    $additionalTax = new AdditionalTax([]);
+                    $taxType = $at->getTaxType()->getValue();
+                    $additionalTax->setTaxType(AdditionalTaxTaxType::newWithValue($taxType));
+                    $additionalTax->setAdditionalTaxRate(AdditionalTaxRate::newWithValue(AdditionalTaxType::getRate($taxType)));
+
+                    $amount = 0;
+                    //Process entries with tax type 06-22
+                    if (AdditionalTaxType::isISCSpecific($taxType)) {
+                        switch (AdditionalTaxType::getItemType($taxType)) {
+                            //Process entries with tax type 06-18
+                            case AdditionalTaxType::ALCOHOL:
+                                //In case of UNIT 18 "Granel" we dont calculate this node.
+                                if($item->getUnitOfMeasure()->getValue() == UnitType::BULK) {
+                                    break;
+                                }
+
+                                //TasaImpuestoAdicional * GradosAlcohol * CantidadReferencia * Subcantidad * CantidadItem
+                                //Ignore subcantidad for now
+                                $amount = bcmul(AdditionalTaxType::getRate($taxType), $item->getAlcoholPercentage()->getValue());
+                                $amount = bcmul($amount, $item->getReferenceQuantity()->getValue());
+                                $amount = bcmul($amount, $item->getItemQuantity()->getValue());
+                                $amount = bcround($amount,2);
+
+                                $additionalTax->setSpecificConsumptionTaxAmount(SpecificConsumptionTaxAmount::newWithValue($amount));
+                                $additionalTaxesAmount = bcadd($additionalTaxesAmount, $amount);
+                                break;
+                            //Process entries with tax type 19-22
+                            case AdditionalTaxType::CIGARETTES:
+                                //Cantidad Item * Cantidad Referencia * Tasa Impuesto Adicional
+                                $amount = bcmul($item->getItemQuantity()->getValue(), $item->getReferenceQuantity()->getValue());
+                                $amount = bcmul($amount, AdditionalTaxType::getRate($taxType));
+                                $amount = bcround($amount,2);
+
+                                $additionalTax->setSpecificConsumptionTaxAmount(SpecificConsumptionTaxAmount::newWithValue($amount));
+                                $additionalTaxesAmount = bcadd($additionalTaxesAmount, $amount);
+                                break;
+                            default:
+                                //Exception
+                                break;
+                        }
+                    } elseif (AdditionalTaxType::isISCAdValorem($taxType)) { //Now we process 23-39
+                        switch (AdditionalTaxType::getItemType($taxType)) {
+                            //Process entries with tax type 23-35
+                            case AdditionaltaxType::ALCOHOL:
+                                //Special rules for UNIT "Granel"
+                                if($item->getUnitOfMeasure()->getValue() == UnitType::BULK) {
+                                    // PrecioUnitarioItem * 1.30 (30% of value) * TasaImpuestoAdicional * CantidadItem
+                                    $amount = bcmul($item->getUnitPrice()->getValue(),1.30);
+                                    $amount = bcmul($amount, AdditionalTaxType::getRate($taxType));
+                                    $amount = bcmul($amount, $item->getItemQuantity()->getValue());
+
+                                    $additionalTax->setAdValoremConsumptionTaxAmount(AdValoremConsumptionTaxAmount::newWithValue($amount));
+                                    $additionalTaxesAmount = bcadd($additionalTaxesAmount, $amount);
+                                } else {
+                                    // ((PrecioUnitarioReferencia / (1+ ITBIS tasa 1)) - (ISPEspecificoMonto/(CantidadItem * CantidadReferencia))) / (1+tasa impuesto adicional especificado) * Cantidad Item * Cantidad Referencia * tasa impuesto adicional especificado
+                                    //1. PrecioUnitarioReferencia / (1 + ITBIS tasa 1). This removes the itbis from the reference unit price
+                                    $rupWithoutItbis = bcdiv($item->getReferenceUnitPrice()->getValue(), bcadd(1, CatalogTaxType::getRate(CatalogTaxType::ITBIS_1)));
+
+                                    //1.1 Get ISCEspecificoMonto (this can be sent somewhere else)
+                                    $iscSpecific = bcmul(AdditionalTaxType::getRate($taxType), $item->getAlcoholPercentage()->getValue());
+                                    $iscSpecific = bcmul($iscSpecific, $item->getReferenceQuantity()->getValue());
+                                    $iscSpecific = bcmul($iscSpecific, $item->getItemQuantity()->getValue());
+                                    $iscSpecific = bcround($iscSpecific,2);
+
+                                    //1.2 Get ISCEspecifico per unit
+                                    $iscSpecificPerUnit = bcdiv($iscSpecific, bcmul($item->getItemQuantity()->getValue(), $item->getReferenceUnit()->getValue()));
+
+                                    //2.  "1" - matching Specific ISC Amount Per Unit. This removes the iscSpecific from the reference unit price
+                                    $rupWithoutItbisAndSpecific = bcsub($rupWithoutItbis, $iscSpecificPerUnit);
+
+                                    //3.  "2" / (1 + isc ad valorem rate). This removes the iscAdValorem from the reference unit price
+                                    $rupWithoutTaxes = bcdiv($rupWithoutItbisAndSpecific, bcadd(1, AdditionalTaxType::getRate($taxType)));
+
+                                    //4.  "3" * isc ad valorem rate. This calculates the ad valorem tax per unit.
+                                    $adValoremTaxPerUnit = bcmul($rupWithoutTaxes, AdditionalTaxType::getRate($taxType));
+
+                                    //5.  "4" * ItemQuantity * referenceQuantity. This calculates the total ad valorem tax
+                                    $amount = bcmul($adValoremTaxPerUnit, $item->getItemQuantity()->getValue());
+                                    $amount = bcmul($amount, $item->getReferenceQuantity()->getValue());
+
+                                    $additionalTax->setAdValoremConsumptionTaxAmount(AdValoremConsumptionTaxAmount::newWithValue($amount));
+                                    $additionalTaxesAmount = bcadd($additionalTaxesAmount, $amount);
+                                }
+
+                                break;
+                            //Process entries with tax type 36-39
+                            case AdditionalTaxType::CIGARETTES:
+                                // ((PrecioUnitarioReferencia / (1+ ITBIS tasa 1)) - TasaImpuestoAdicional) / (1+tasa impuesto adicional especificado) * Cantidad Item * Cantidad Referencia * tasa impuesto adicional especificado
+                                //1. PrecioUnitarioReferencia / (1 + ITBIS tasa 1). This removes the itbis from the reference unit price
+                                $rupWithoutItbis = bcdiv($item->getReferenceUnitPrice()->getValue(), bcadd(1, CatalogTaxType::getRate(CatalogTaxType::ITBIS_1)));
+
+                                //2.  "1" - matching Specific ISC Rate. This removes the iscSpecific from the reference unit price
+                                $rupWithoutItbisAndSpecific = bcsub($rupWithoutItbis, AdditionalTaxType::getRate(AdditionalTaxType::getMatchingSpecificTaxType($taxType)));
+
+                                //3.  "2" / (1 + isc ad valorem rate). This removes the iscAdValorem from the reference unit price
+                                $rupWithoutTaxes = bcdiv($rupWithoutItbisAndSpecific, bcadd(1, AdditionalTaxType::getRate($taxType)));
+
+                                //4.  "3" * isc ad valorem rate. This calculates the ad valorem tax per unit.
+                                $adValoremTaxPerUnit = bcmul($rupWithoutTaxes, AdditionalTaxType::getRate($taxType));
+
+                                //5.  "4" * ItemQuantity * referenceQuantity. This calculates the total ad valorem tax
+                                $amount = bcmul($adValoremTaxPerUnit, $item->getItemQuantity()->getValue());
+                                $amount = bcmul($amount, $item->getReferenceQuantity()->getValue());
+
+                                $additionalTax->setAdValoremConsumptionTaxAmount(AdValoremConsumptionTaxAmount::newWithValue($amount));
+                                $additionalTaxesAmount = bcadd($additionalTaxesAmount, $amount);
+
+                                break;
+                            default:
+                                break;
+
+                        }
+                    } else {
+                        //TODO: Other taxes
+                    }
+                    //addi
+                    //setiscE if applicable
+                    //setiscAV if applicable
+                    //set otherTax if applicable
+                }
+            }
+        }
+        //Create itbis1
+        //create itbis2
+        //Create itbis3
+        //Create itbis1rate
+        //Create itbis2rate
+        //Create itbis3rate
+        //CreateTotalTaxableItbis
+        //CreateTOtalItbis
+        //Create total amount
+
+        //Todo: retention total amounts (ITBISRetenido,ISRRetenido, ITBISPercepcion, ISRPercepcion)
+    }
 
     /**
      * @return string|null

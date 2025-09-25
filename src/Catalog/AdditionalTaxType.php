@@ -7,9 +7,16 @@ use RuntimeException;
 
 abstract class AdditionalTaxType
 {
-    const ISC_SPECIFIC = "ISC_SPECIFIC";
-    const ISC_AD_VALOREM = "ISC_AD_VALOREM";
+    //Item Types
+    const ALCOHOL = 'ALCOHOL';
+    const CIGARETTES = 'CIGARETTES';
+    const OTHER = 'OTHER';
 
+    //ISC Types
+    const ISC_SPECIFIC = 'ISC_SPECIFIC';
+    const ISC_AD_VALOREM = 'ISC_AD_VALOREM';
+
+    //Additional Tax Types
     const LEGAL_TIP = '001';
     const CDT = '002'; //Contribución al Desarrollo de las Telecomunicaciones
     const ISC_INSURANCE_SERVICES = '003';
@@ -58,6 +65,7 @@ abstract class AdditionalTaxType
             'description' => 'Propina Legal',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '10',
+            'itemType' => self::OTHER,
         ],
         self::CDT => [
             'name' => 'Contribución al Desarrollo de las Telecomunicaciones',
@@ -65,6 +73,7 @@ abstract class AdditionalTaxType
             'description' => 'Contribución al Desarrollo de las Telecomunicaciones Ley 153-98 Art. 45',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '2',
+            'itemType' => self::OTHER,
         ],
         self::ISC_INSURANCE_SERVICES => [
             'name' => 'Impuesto Selectivo al Consumo',
@@ -72,6 +81,7 @@ abstract class AdditionalTaxType
             'description' => 'Servicios Seguros en general',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '16',
+            'itemType' => self::OTHER,
         ],
         self::ISC_TELECOM_SERVICES => [
             'name' => 'Impuesto Selectivo al Consumo',
@@ -79,6 +89,7 @@ abstract class AdditionalTaxType
             'description' => 'Servicios de Telecomunicaciones',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '10',
+            'itemType' => self::OTHER,
         ],
         self::FIRST_VEHICLE_REGISTRATION => [
             'name' => 'Impuesto sobre el Primer Registro de Vehículos (Primera Placa)',
@@ -86,6 +97,7 @@ abstract class AdditionalTaxType
             'description' => 'Expedición de la primera placa',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '17',
+            'itemType' => self::OTHER,
         ],
         self::ISC_BEER_SPECIFIC => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa Específico)',
@@ -93,6 +105,8 @@ abstract class AdditionalTaxType
             'description' => 'Cerveza',
             'taxFactorType' => TaxFactorType::FEE, // This is a fixed amount
             'rate' => '632.58',
+            'itemType' => self::ALCOHOL,
+            'adValoremTaxType' => self::ISC_BEER_AD_VALOREM,
         ],
         self::ISC_GRAPE_WINE_SPECIFIC => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa Específico)',
@@ -100,6 +114,8 @@ abstract class AdditionalTaxType
             'description' => 'Vinos de uva',
             'taxFactorType' => TaxFactorType::FEE,
             'rate' => '632.58',
+            'itemType' => self::ALCOHOL,
+            'adValoremTaxType' => self::ISC_GRAPE_WINE_AD_VALOREM,
         ],
         self::ISC_VERMOUTH_SPECIFIC => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa Específico)',
@@ -107,6 +123,8 @@ abstract class AdditionalTaxType
             'description' => 'Vermut y demás vinos de uvas frescas',
             'taxFactorType' => TaxFactorType::FEE,
             'rate' => '632.58',
+            'itemType' => self::ALCOHOL,
+            'adValoremTaxType' => self::ISC_VERMOUTH_AD_VALOREM,
         ],
         self::ISC_OTHER_FERMENTED_BEVERAGES_SPECIFIC => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa Específico)',
@@ -114,6 +132,8 @@ abstract class AdditionalTaxType
             'description' => 'Demás bebidas fermentadas',
             'taxFactorType' => TaxFactorType::FEE,
             'rate' => '632.58',
+            'itemType' => self::ALCOHOL,
+            'adValoremTaxType' => self::ISC_OTHER_FERMENTED_BEVERAGES_AD_VALOREM,
         ],
         self::ISC_ETHYL_ALCOHOL_80_PLUS_SPECIFIC => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa Específico)',
@@ -121,6 +141,8 @@ abstract class AdditionalTaxType
             'description' => 'Alcohol Etílico sin desnaturalizar (Mayor o igual a 80%)',
             'taxFactorType' => TaxFactorType::FEE,
             'rate' => '632.58',
+            'itemType' => self::ALCOHOL,
+            'adValoremTaxType' => self::ISC_ETHYL_ALCOHOL_80_PLUS_AD_VALOREM,
         ],
         self::ISC_ETHYL_ALCOHOL_UNDER_80_SPECIFIC => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa Específico)',
@@ -128,6 +150,8 @@ abstract class AdditionalTaxType
             'description' => 'Alcohol Etílico sin desnaturalizar (inferior a 80%)',
             'taxFactorType' => TaxFactorType::FEE,
             'rate' => '632.58',
+            'itemType' => self::ALCOHOL,
+            'adValoremTaxType' => self::ISC_ETHYL_ALCOHOL_UNDER_80_AD_VALOREM,
         ],
         self::ISC_GRAPE_BRANDY_SPECIFIC => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa Específico)',
@@ -135,6 +159,8 @@ abstract class AdditionalTaxType
             'description' => 'Aguardientes de uva',
             'taxFactorType' => TaxFactorType::FEE,
             'rate' => '632.58',
+            'itemType' => self::ALCOHOL,
+            'adValoremTaxType' => self::ISC_GRAPE_BRANDY_AD_VALOREM,
         ],
         self::ISC_WHISKEY_SPECIFIC => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa Específico)',
@@ -142,6 +168,8 @@ abstract class AdditionalTaxType
             'description' => 'Whisky',
             'taxFactorType' => TaxFactorType::FEE,
             'rate' => '632.58',
+            'itemType' => self::ALCOHOL,
+            'adValoremTaxType' => self::ISC_WHISKEY_AD_VALOREM,
         ],
         self::ISC_RUM_SPECIFIC => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa Específico)',
@@ -149,6 +177,8 @@ abstract class AdditionalTaxType
             'description' => 'Ron y demás aguardientes de caña',
             'taxFactorType' => TaxFactorType::FEE,
             'rate' => '632.58',
+            'itemType' => self::ALCOHOL,
+            'adValoremTaxType' => self::ISC_RUM_AD_VALOREM,
         ],
         self::ISC_GIN_SPECIFIC => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa Específico)',
@@ -156,6 +186,8 @@ abstract class AdditionalTaxType
             'description' => 'Gin y Ginebra',
             'taxFactorType' => TaxFactorType::FEE,
             'rate' => '632.58',
+            'itemType' => self::ALCOHOL,
+            'adValoremTaxType' => self::ISC_GIN_AD_VALOREM,
         ],
         self::ISC_VODKA_SPECIFIC => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa Específico)',
@@ -163,6 +195,8 @@ abstract class AdditionalTaxType
             'description' => 'Vodka',
             'taxFactorType' => TaxFactorType::FEE,
             'rate' => '632.58',
+            'itemType' => self::ALCOHOL,
+            'adValoremTaxType' => self::ISC_VODKA_AD_VALOREM,
         ],
         self::ISC_LIQUEURS_SPECIFIC => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa Específico)',
@@ -170,6 +204,8 @@ abstract class AdditionalTaxType
             'description' => 'Licores',
             'taxFactorType' => TaxFactorType::FEE,
             'rate' => '632.58',
+            'itemType' => self::ALCOHOL,
+            'adValoremTaxType' => self::ISC_LIQUEURS_AD_VALOREM,
         ],
         self::ISC_OTHER_BEVERAGES_AND_ALCOHOLS_SPECIFIC => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa Específico)',
@@ -177,6 +213,8 @@ abstract class AdditionalTaxType
             'description' => 'Los demás (Bebidas y Alcoholes)',
             'taxFactorType' => TaxFactorType::FEE,
             'rate' => '632.58',
+            'itemType' => self::ALCOHOL,
+            'adValoremTaxType' => self::ISC_OTHER_BEVERAGES_AND_ALCOHOLS_AD_VALOREM,
         ],
         self::ISC_TOBACCO_CIGARETTES_20_UNITS_SPECIFIC => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa Específico)',
@@ -184,6 +222,8 @@ abstract class AdditionalTaxType
             'description' => 'Cigarrillos que contengan tabaco cajetilla 20 unidades',
             'taxFactorType' => TaxFactorType::FEE,
             'rate' => '53.51',
+            'itemType' => self::CIGARETTES,
+            'adValoremTaxType' => self::ISC_TOBACCO_CIGARETTES_20_UNITS_AD_VALOREM,
         ],
         self::ISC_OTHER_CIGARETTES_20_UNITS_SPECIFIC => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa Específico)',
@@ -191,6 +231,8 @@ abstract class AdditionalTaxType
             'description' => 'Los demás Cigarrillos que contengan 20 unidades',
             'taxFactorType' => TaxFactorType::FEE,
             'rate' => '53.51',
+            'itemType' => self::CIGARETTES,
+            'adValoremTaxType' => self::ISC_OTHER_CIGARETTES_20_UNITS_AD_VALOREM,
         ],
         self::ISC_TOBACCO_CIGARETTES_10_UNITS_SPECIFIC => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa Específico)',
@@ -198,6 +240,8 @@ abstract class AdditionalTaxType
             'description' => 'Cigarrillos que contengan 10 unidades',
             'taxFactorType' => TaxFactorType::FEE,
             'rate' => '26.75',
+            'itemType' => self::CIGARETTES,
+            'adValoremTaxType' => self::ISC_TOBACCO_CIGARETTES_10_UNITS_AD_VALOREM,
         ],
         self::ISC_OTHER_CIGARETTES_10_UNITS_SPECIFIC => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa Específico)',
@@ -205,6 +249,8 @@ abstract class AdditionalTaxType
             'description' => 'Los demás Cigarrillos que contengan 10 unidades',
             'taxFactorType' => TaxFactorType::FEE,
             'rate' => '26.75',
+            'itemType' => self::CIGARETTES,
+            'adValoremTaxType' => self::ISC_OTHER_CIGARETTES_10_UNITS_AD_VALOREM,
         ],
         self::ISC_BEER_AD_VALOREM => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa AdValorem)',
@@ -212,6 +258,8 @@ abstract class AdditionalTaxType
             'description' => 'Cerveza',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '10',
+            'itemType' => self::ALCOHOL,
+            'specificTaxType' => self::ISC_BEER_SPECIFIC,
         ],
         self::ISC_GRAPE_WINE_AD_VALOREM => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa AdValorem)',
@@ -219,6 +267,8 @@ abstract class AdditionalTaxType
             'description' => 'Vinos de uva',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '10',
+            'itemType' => self::ALCOHOL,
+            'specificTaxType' => self::ISC_GRAPE_WINE_SPECIFIC,
         ],
         self::ISC_VERMOUTH_AD_VALOREM => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa AdValorem)',
@@ -226,6 +276,8 @@ abstract class AdditionalTaxType
             'description' => 'Vermut y demás vinos de uvas frescas',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '10',
+            'itemType' => self::ALCOHOL,
+            'specificTaxType' => self::ISC_VERMOUTH_SPECIFIC,
         ],
         self::ISC_OTHER_FERMENTED_BEVERAGES_AD_VALOREM => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa AdValorem)',
@@ -233,6 +285,8 @@ abstract class AdditionalTaxType
             'description' => 'Demás bebidas fermentadas',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '10',
+            'itemType' => self::ALCOHOL,
+            'specificTaxType' => self::ISC_OTHER_FERMENTED_BEVERAGES_SPECIFIC,
         ],
         self::ISC_ETHYL_ALCOHOL_80_PLUS_AD_VALOREM => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa AdValorem)',
@@ -240,6 +294,8 @@ abstract class AdditionalTaxType
             'description' => 'Alcohol Etílico sin desnaturalizar (Mayor o igual a 80%)',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '10',
+            'itemType' => self::ALCOHOL,
+            'specificTaxType' => self::ISC_ETHYL_ALCOHOL_80_PLUS_SPECIFIC,
         ],
         self::ISC_ETHYL_ALCOHOL_UNDER_80_AD_VALOREM => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa AdValorem)',
@@ -247,6 +303,8 @@ abstract class AdditionalTaxType
             'description' => 'Alcohol Etílico sin desnaturalizar (inferior a 80%)',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '10',
+            'itemType' => self::ALCOHOL,
+            'specificTaxType' => self::ISC_ETHYL_ALCOHOL_UNDER_80_SPECIFIC,
         ],
         self::ISC_GRAPE_BRANDY_AD_VALOREM => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa AdValorem)',
@@ -254,6 +312,8 @@ abstract class AdditionalTaxType
             'description' => 'Aguardientes de uva',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '10',
+            'itemType' => self::ALCOHOL,
+            'specificTaxType' => self::ISC_GRAPE_BRANDY_SPECIFIC,
         ],
         self::ISC_WHISKEY_AD_VALOREM => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa AdValorem)',
@@ -261,6 +321,8 @@ abstract class AdditionalTaxType
             'description' => 'Whisky',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '10',
+            'itemType' => self::ALCOHOL,
+            'specificTaxType' => self::ISC_WHISKEY_SPECIFIC,
         ],
         self::ISC_RUM_AD_VALOREM => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa AdValorem)',
@@ -268,6 +330,8 @@ abstract class AdditionalTaxType
             'description' => 'Ron y demás aguardientes de caña',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '10',
+            'itemType' => self::ALCOHOL,
+            'specificTaxType' => self::ISC_RUM_SPECIFIC,
         ],
         self::ISC_GIN_AD_VALOREM => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa AdValorem)',
@@ -275,6 +339,8 @@ abstract class AdditionalTaxType
             'description' => 'Gin y Ginebra',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '10',
+            'itemType' => self::ALCOHOL,
+            'specificTaxType' => self::ISC_GIN_SPECIFIC,
         ],
         self::ISC_VODKA_AD_VALOREM => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa AdValorem)',
@@ -282,6 +348,8 @@ abstract class AdditionalTaxType
             'description' => 'Vodka',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '10',
+            'itemType' => self::ALCOHOL,
+            'specificTaxType' => self::ISC_VODKA_SPECIFIC,
         ],
         self::ISC_LIQUEURS_AD_VALOREM => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa AdValorem)',
@@ -289,6 +357,8 @@ abstract class AdditionalTaxType
             'description' => 'Licores',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '10',
+            'itemType' => self::ALCOHOL,
+            'specificTaxType' => self::ISC_LIQUEURS_SPECIFIC,
         ],
         self::ISC_OTHER_BEVERAGES_AND_ALCOHOLS_AD_VALOREM => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa AdValorem)',
@@ -296,6 +366,8 @@ abstract class AdditionalTaxType
             'description' => 'Los demás (Bebidas y Alcoholes)',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '10',
+            'itemType' => self::ALCOHOL,
+            'specificTaxType' => self::ISC_OTHER_BEVERAGES_AND_ALCOHOLS_SPECIFIC,
         ],
         self::ISC_TOBACCO_CIGARETTES_20_UNITS_AD_VALOREM => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa AdValorem)',
@@ -303,6 +375,8 @@ abstract class AdditionalTaxType
             'description' => 'Cigarrillos que contengan tabaco cajetilla 20 unidades',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '20',
+            'itemType' => self::CIGARETTES,
+            'specificTaxType' => self::ISC_TOBACCO_CIGARETTES_20_UNITS_SPECIFIC,
         ],
         self::ISC_OTHER_CIGARETTES_20_UNITS_AD_VALOREM => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa AdValorem)',
@@ -310,6 +384,8 @@ abstract class AdditionalTaxType
             'description' => 'Los demás Cigarrillos que contengan 20 unidades',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '20',
+            'itemType' => self::CIGARETTES,
+            'specificTaxType' => self::ISC_OTHER_CIGARETTES_20_UNITS_SPECIFIC,
         ],
         self::ISC_TOBACCO_CIGARETTES_10_UNITS_AD_VALOREM => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa AdValorem)',
@@ -317,6 +393,8 @@ abstract class AdditionalTaxType
             'description' => 'Cigarrillos que contengan 10 unidades',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '20',
+            'itemType' => self::CIGARETTES,
+            'specificTaxType' => self::ISC_TOBACCO_CIGARETTES_10_UNITS_SPECIFIC,
         ],
         self::ISC_OTHER_CIGARETTES_10_UNITS_AD_VALOREM => [
             'name' => 'Impuesto Selectivo al Consumo (Tasa AdValorem)',
@@ -324,6 +402,8 @@ abstract class AdditionalTaxType
             'description' => 'Los demás Cigarrillos que contengan 10 unidades',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '20',
+            'itemType' => self::CIGARETTES,
+            'specificTaxType' => self::ISC_OTHER_CIGARETTES_10_UNITS_SPECIFIC,
         ],
     ];
 
@@ -348,6 +428,16 @@ abstract class AdditionalTaxType
         return self::$map[$id]['name'];
     }
 
+    public static function getRate($id, $lang = 'es'): ?string
+    {
+        if (!self::exists($id)) {
+            return null;
+        }
+
+        return self::$map[$id]['rate'];
+    }
+
+
     public static function exists($id): bool
     {
         return array_key_exists($id, self::$map);
@@ -367,5 +457,29 @@ abstract class AdditionalTaxType
             return false;
         }
         return self::$map[$id]['shortName'] == 'ISC AdValorem';
+    }
+
+    public static function getItemType($id): string
+    {
+        if(!self::exists($id)) {
+            return false;
+        }
+        return self::$map[$id]['itemType'];
+    }
+
+    public static function getMatchingSpecificTaxType($id): string
+    {
+        if(!self::exists($id)) {
+            return false;
+        }
+        return self::$map[$id]['specificTaxType'];
+    }
+
+    public static function getMatchingAdValoremTaxType($id): string
+    {
+        if(!self::exists($id)) {
+            return false;
+        }
+        return self::$map[$id]['adValoremTaxType'];
     }
 }

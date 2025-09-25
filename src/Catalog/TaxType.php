@@ -6,27 +6,27 @@ use Angle\ECF\Catalog\TaxFactorType;
 
 abstract class TaxType
 {
-    const ITBIS_18 = 'ITBIS1';
-    const ITBIS_16 = 'ITBIS2';
-    const ITBIS_0 = 'ITBIS3';
+    const ITBIS_1 = 'ITBIS1';
+    const ITBIS_2 = 'ITBIS2';
+    const ITBIS_3 = 'ITBIS3';
     const ISR_WITHHOLDING = 'ISR';
 
     private static $map = [
-        self::ITBIS_18 => [
+        self::ITBIS_1 => [
             'name' => 'ITBIS Tasa 1 (18%)',
             'shortName' => 'ITBIS 18%',
             'description' => 'Impuesto sobre la Transferencia de Bienes Industrializados y Servicios - Tasa 1 (18%)',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '18',
         ],
-        self::ITBIS_16 => [
+        self::ITBIS_2 => [
             'name' => 'ITBIS Tasa 2 (16%)',
             'shortName' => 'ITBIS 16%',
             'description' => 'Impuesto sobre la Transferencia de Bienes Industrializados y Servicios - Tasa 2 (16%)',
             'taxFactorType' => TaxFactorType::RATE,
             'rate' => '16',
         ],
-        self::ITBIS_0 => [
+        self::ITBIS_3 => [
             'name' => 'ITBIS Tasa 3 (0%)',
             'shortName' => 'ITBIS 0%',
             'description' => 'Impuesto sobre la Transferencia de Bienes Industrializados y Servicios - Tasa 3 (0%)',

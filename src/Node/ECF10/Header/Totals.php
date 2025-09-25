@@ -270,7 +270,7 @@ class Totals extends ECFNode
      */
     public function setChildrenFromDOMNodes(array $children): void
     {
-foreach ($children as $node) {
+        foreach ($children as $node) {
             if ($node instanceof DOMText) {
                 continue;
             }

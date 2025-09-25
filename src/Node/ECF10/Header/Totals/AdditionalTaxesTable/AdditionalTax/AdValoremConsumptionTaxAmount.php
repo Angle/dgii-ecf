@@ -63,6 +63,18 @@ class AdValoremConsumptionTaxAmount extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): AdValoremConsumptionTaxAmount
+    {
+        $adValoremConsumptionTaxAmount = new AdValoremConsumptionTaxAmount([]);
+        $adValoremConsumptionTaxAmount->setValue($value);
+
+        return $adValoremConsumptionTaxAmount;
+    }
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

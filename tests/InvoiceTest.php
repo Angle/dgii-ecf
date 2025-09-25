@@ -124,6 +124,7 @@ final class InvoiceTest extends TestCase
 
         try {
             $ecf = new ECF10($data);
+            $ecf->calculateTotals();
         } catch (\Exception $e) {
             $this->fail($e->getMessage());
             return;

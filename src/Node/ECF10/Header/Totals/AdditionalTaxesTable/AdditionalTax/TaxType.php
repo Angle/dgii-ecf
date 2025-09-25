@@ -63,6 +63,19 @@ class TaxType extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): TaxType
+    {
+        $taxType = new TaxType([]);
+        $taxType->setValue($value);
+
+        return $taxType;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 
