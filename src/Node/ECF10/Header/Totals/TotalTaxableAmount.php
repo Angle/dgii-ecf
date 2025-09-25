@@ -65,6 +65,19 @@ class TotalTaxableAmount extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): TotalTaxableAmount
+    {
+        $totalTaxableAmount = new TotalTaxableAmount([]);
+        $totalTaxableAmount->setValue($value);
+
+        return $totalTaxableAmount;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

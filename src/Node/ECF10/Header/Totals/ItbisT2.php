@@ -65,6 +65,19 @@ class ItbisT2 extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): ItbisT2
+    {
+        $itbisT2 = new ItbisT2([]);
+        $itbisT2->setValue($value);
+
+        return $itbisT2;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

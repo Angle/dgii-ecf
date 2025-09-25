@@ -65,6 +65,19 @@ class TaxableAmountT1 extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): TaxableAmountT1
+    {
+        $taxableAmountT1 = new TaxableAmountT1([]);
+        $taxableAmountT1->setValue($value);
+
+        return $taxableAmountT1;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

@@ -10,13 +10,30 @@ use Angle\ECF\ECFNode;
 use Angle\ECF\ECFException;
 use Angle\ECF\ECFInterface;
 use Angle\ECF\Node\ECF10\Header\Totals;
+use Angle\ECF\Node\ECF10\Header\Totals\AdditionalTaxAmount;
+use Angle\ECF\Node\ECF10\Header\Totals\AdditionalTaxesTable;
 use Angle\ECF\Node\ECF10\Header\Totals\AdditionalTaxesTable\AdditionalTax;
 use Angle\ECF\Node\ECF10\Header\Totals\AdditionalTaxesTable\AdditionalTax\AdditionalTaxRate;
 use Angle\ECF\Node\ECF10\Header\Totals\AdditionalTaxesTable\AdditionalTax\AdValoremConsumptionTaxAmount;
 use Angle\ECF\Node\ECF10\Header\Totals\AdditionalTaxesTable\AdditionalTax\SpecificConsumptionTaxAmount;
 use Angle\ECF\Node\ECF10\Header\Totals\AdditionalTaxesTable\AdditionalTax\TaxType as AdditionalTaxTaxType;
+use Angle\ECF\Node\ECF10\Header\Totals\ExemptAmount;
+use Angle\ECF\Node\ECF10\Header\Totals\ItbisT1;
+use Angle\ECF\Node\ECF10\Header\Totals\ItbisT2;
+use Angle\ECF\Node\ECF10\Header\Totals\ItbisT3;
+use Angle\ECF\Node\ECF10\Header\Totals\NonBillableAmount;
+use Angle\ECF\Node\ECF10\Header\Totals\TaxableAmountT1;
+use Angle\ECF\Node\ECF10\Header\Totals\TaxableAmountT2;
+use Angle\ECF\Node\ECF10\Header\Totals\TaxableAmountT3;
+use Angle\ECF\Node\ECF10\Header\Totals\TotalAmount;
+use Angle\ECF\Node\ECF10\Header\Totals\TotalItbis;
+use Angle\ECF\Node\ECF10\Header\Totals\TotalItbisT1;
+use Angle\ECF\Node\ECF10\Header\Totals\TotalItbisT2;
+use Angle\ECF\Node\ECF10\Header\Totals\TotalItbisT3;
+use Angle\ECF\Node\ECF10\Header\Totals\TotalTaxableAmount;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\AdditionalTaxTable\AdditionalTax\TaxType;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\BillingIndicator;
+use Angle\ECF\Utility\Math;
 use DOMDocument;
 use DOMElement;
 use DOMNode;
@@ -310,36 +327,34 @@ class ECF10 extends ECFNode implements ECFInterface
 
         //TODO: Account for recharges and discounts
 
-        $this->getHeader()->setTotals(new Totals([]));
-
         $itbis1TaxableAmount = 0;
         $itbis2TaxableAmount = 0;
         $itbis3TaxableAmount = 0;
         $exemptAmount = 0;
         $nonBilledAmount = 0;
+        $additionalTaxesAmount = 0;
 
+        //First get all tax data
         $additionalTaxes = [];
         foreach ($this->getItemDetails()->getItems() as $item) {
             switch ($item->getBillingIndicator()->getValue()) {
                 case BillingIndicator::NOT_BILLED:
-                    $nonBilledAmount = bcadd($nonBilledAmount, $item->getItemAmount()->getValue());
+                    $nonBilledAmount = Math::add($nonBilledAmount, $item->getItemAmount()->getValue());
                     break;
                 case BillingIndicator::ITBIS1:
-                    $itbis1TaxableAmount = bcadd($itbis1TaxableAmount, $item->getItemAmount()->getValue());
+                    $itbis1TaxableAmount = Math::add($itbis1TaxableAmount, $item->getItemAmount()->getValue());
                     break;
                 case BillingIndicator::ITBIS2:
-                    $itbis2TaxableAmount = bcadd($itbis2TaxableAmount, $item->getItemAmount()->getValue());
+                    $itbis2TaxableAmount = Math::add($itbis2TaxableAmount, $item->getItemAmount()->getValue());
                     break;
                 case BillingIndicator::ITBIS3:
-                    $itbis3TaxableAmount = bcadd($itbis3TaxableAmount, $item->getItemAmount()->getValue());
+                    $itbis3TaxableAmount = Math::add($itbis3TaxableAmount, $item->getItemAmount()->getValue());
                     break;
                 case BillingIndicator::EXEMPT:
-                    $exemptAmount = bcadd($exemptAmount, $item->getItemAmount()->getValue());
+                    $exemptAmount = Math::add($exemptAmount, $item->getItemAmount()->getValue());
                     break;
             }
 
-            //Process other taxes
-            $additionalTaxesAmount = 0;
             //Create a total/additionalTax for each itemdetails/additionalTax
             if ($item->getAdditionalTaxTable() && $item->getAdditionalTaxTable()->getAdditionalTaxes()) {
                 foreach ($item->getAdditionalTaxTable()->getAdditionalTaxes() as $at) {
@@ -357,29 +372,29 @@ class ECF10 extends ECFNode implements ECFInterface
                             //Process entries with tax type 06-18
                             case AdditionalTaxType::ALCOHOL:
                                 //In case of UNIT 18 "Granel" we dont calculate this node.
-                                if($item->getUnitOfMeasure()->getValue() == UnitType::BULK) {
+                                if ($item->getUnitOfMeasure()->getValue() == UnitType::BULK) {
                                     break;
                                 }
 
                                 //TasaImpuestoAdicional * GradosAlcohol * CantidadReferencia * Subcantidad * CantidadItem
                                 //Ignore subcantidad for now
-                                $amount = bcmul(AdditionalTaxType::getRate($taxType), $item->getAlcoholPercentage()->getValue());
-                                $amount = bcmul($amount, $item->getReferenceQuantity()->getValue());
-                                $amount = bcmul($amount, $item->getItemQuantity()->getValue());
-                                $amount = bcround($amount,2);
+                                $amount = Math::mul(AdditionalTaxType::getRate($taxType), $item->getAlcoholPercentage()->getValue());
+                                $amount = Math::mul($amount, $item->getReferenceQuantity()->getValue());
+                                $amount = Math::mul($amount, $item->getItemQuantity()->getValue());
+                                $amount = Math::round($amount,2);
 
                                 $additionalTax->setSpecificConsumptionTaxAmount(SpecificConsumptionTaxAmount::newWithValue($amount));
-                                $additionalTaxesAmount = bcadd($additionalTaxesAmount, $amount);
+                                $additionalTaxesAmount = Math::add($additionalTaxesAmount, $amount);
                                 break;
                             //Process entries with tax type 19-22
                             case AdditionalTaxType::CIGARETTES:
                                 //Cantidad Item * Cantidad Referencia * Tasa Impuesto Adicional
-                                $amount = bcmul($item->getItemQuantity()->getValue(), $item->getReferenceQuantity()->getValue());
-                                $amount = bcmul($amount, AdditionalTaxType::getRate($taxType));
-                                $amount = bcround($amount,2);
+                                $amount = Math::mul($item->getItemQuantity()->getValue(), $item->getReferenceQuantity()->getValue());
+                                $amount = Math::mul($amount, AdditionalTaxType::getRate($taxType));
+                                $amount = Math::round($amount,2);
 
                                 $additionalTax->setSpecificConsumptionTaxAmount(SpecificConsumptionTaxAmount::newWithValue($amount));
-                                $additionalTaxesAmount = bcadd($additionalTaxesAmount, $amount);
+                                $additionalTaxesAmount = Math::add($additionalTaxesAmount, $amount);
                                 break;
                             default:
                                 //Exception
@@ -390,43 +405,43 @@ class ECF10 extends ECFNode implements ECFInterface
                             //Process entries with tax type 23-35
                             case AdditionaltaxType::ALCOHOL:
                                 //Special rules for UNIT "Granel"
-                                if($item->getUnitOfMeasure()->getValue() == UnitType::BULK) {
+                                if ($item->getUnitOfMeasure()->getValue() == UnitType::BULK) {
                                     // PrecioUnitarioItem * 1.30 (30% of value) * TasaImpuestoAdicional * CantidadItem
-                                    $amount = bcmul($item->getUnitPrice()->getValue(),1.30);
-                                    $amount = bcmul($amount, AdditionalTaxType::getRate($taxType));
-                                    $amount = bcmul($amount, $item->getItemQuantity()->getValue());
+                                    $amount = Math::mul($item->getUnitPrice()->getValue(),1.30);
+                                    $amount = Math::mul($amount, AdditionalTaxType::getRate($taxType));
+                                    $amount = Math::mul($amount, $item->getItemQuantity()->getValue());
 
                                     $additionalTax->setAdValoremConsumptionTaxAmount(AdValoremConsumptionTaxAmount::newWithValue($amount));
-                                    $additionalTaxesAmount = bcadd($additionalTaxesAmount, $amount);
+                                    $additionalTaxesAmount = Math::add($additionalTaxesAmount, $amount);
                                 } else {
                                     // ((PrecioUnitarioReferencia / (1+ ITBIS tasa 1)) - (ISPEspecificoMonto/(CantidadItem * CantidadReferencia))) / (1+tasa impuesto adicional especificado) * Cantidad Item * Cantidad Referencia * tasa impuesto adicional especificado
                                     //1. PrecioUnitarioReferencia / (1 + ITBIS tasa 1). This removes the itbis from the reference unit price
-                                    $rupWithoutItbis = bcdiv($item->getReferenceUnitPrice()->getValue(), bcadd(1, CatalogTaxType::getRate(CatalogTaxType::ITBIS_1)));
+                                    $rupWithoutItbis = Math::div($item->getReferenceUnitPrice()->getValue(), Math::add(1, CatalogTaxType::getRate(CatalogTaxType::ITBIS_1)));
 
                                     //1.1 Get ISCEspecificoMonto (this can be sent somewhere else)
-                                    $iscSpecific = bcmul(AdditionalTaxType::getRate($taxType), $item->getAlcoholPercentage()->getValue());
-                                    $iscSpecific = bcmul($iscSpecific, $item->getReferenceQuantity()->getValue());
-                                    $iscSpecific = bcmul($iscSpecific, $item->getItemQuantity()->getValue());
-                                    $iscSpecific = bcround($iscSpecific,2);
+                                    $iscSpecific = Math::mul(AdditionalTaxType::getRate($taxType), $item->getAlcoholPercentage()->getValue());
+                                    $iscSpecific = Math::mul($iscSpecific, $item->getReferenceQuantity()->getValue());
+                                    $iscSpecific = Math::mul($iscSpecific, $item->getItemQuantity()->getValue());
+                                    $iscSpecific = Math::round($iscSpecific,2);
 
                                     //1.2 Get ISCEspecifico per unit
-                                    $iscSpecificPerUnit = bcdiv($iscSpecific, bcmul($item->getItemQuantity()->getValue(), $item->getReferenceUnit()->getValue()));
+                                    $iscSpecificPerUnit = Math::div($iscSpecific, Math::mul($item->getItemQuantity()->getValue(), $item->getReferenceUnit()->getValue()));
 
                                     //2.  "1" - matching Specific ISC Amount Per Unit. This removes the iscSpecific from the reference unit price
-                                    $rupWithoutItbisAndSpecific = bcsub($rupWithoutItbis, $iscSpecificPerUnit);
+                                    $rupWithoutItbisAndSpecific = Math::sub($rupWithoutItbis, $iscSpecificPerUnit);
 
                                     //3.  "2" / (1 + isc ad valorem rate). This removes the iscAdValorem from the reference unit price
-                                    $rupWithoutTaxes = bcdiv($rupWithoutItbisAndSpecific, bcadd(1, AdditionalTaxType::getRate($taxType)));
+                                    $rupWithoutTaxes = Math::div($rupWithoutItbisAndSpecific, Math::add(1, AdditionalTaxType::getRate($taxType)));
 
                                     //4.  "3" * isc ad valorem rate. This calculates the ad valorem tax per unit.
-                                    $adValoremTaxPerUnit = bcmul($rupWithoutTaxes, AdditionalTaxType::getRate($taxType));
+                                    $adValoremTaxPerUnit = Math::mul($rupWithoutTaxes, AdditionalTaxType::getRate($taxType));
 
                                     //5.  "4" * ItemQuantity * referenceQuantity. This calculates the total ad valorem tax
-                                    $amount = bcmul($adValoremTaxPerUnit, $item->getItemQuantity()->getValue());
-                                    $amount = bcmul($amount, $item->getReferenceQuantity()->getValue());
+                                    $amount = Math::mul($adValoremTaxPerUnit, $item->getItemQuantity()->getValue());
+                                    $amount = Math::mul($amount, $item->getReferenceQuantity()->getValue());
 
                                     $additionalTax->setAdValoremConsumptionTaxAmount(AdValoremConsumptionTaxAmount::newWithValue($amount));
-                                    $additionalTaxesAmount = bcadd($additionalTaxesAmount, $amount);
+                                    $additionalTaxesAmount = Math::add($additionalTaxesAmount, $amount);
                                 }
 
                                 break;
@@ -434,23 +449,23 @@ class ECF10 extends ECFNode implements ECFInterface
                             case AdditionalTaxType::CIGARETTES:
                                 // ((PrecioUnitarioReferencia / (1+ ITBIS tasa 1)) - TasaImpuestoAdicional) / (1+tasa impuesto adicional especificado) * Cantidad Item * Cantidad Referencia * tasa impuesto adicional especificado
                                 //1. PrecioUnitarioReferencia / (1 + ITBIS tasa 1). This removes the itbis from the reference unit price
-                                $rupWithoutItbis = bcdiv($item->getReferenceUnitPrice()->getValue(), bcadd(1, CatalogTaxType::getRate(CatalogTaxType::ITBIS_1)));
+                                $rupWithoutItbis = Math::div($item->getReferenceUnitPrice()->getValue(), Math::add(1, CatalogTaxType::getRate(CatalogTaxType::ITBIS_1)));
 
                                 //2.  "1" - matching Specific ISC Rate. This removes the iscSpecific from the reference unit price
-                                $rupWithoutItbisAndSpecific = bcsub($rupWithoutItbis, AdditionalTaxType::getRate(AdditionalTaxType::getMatchingSpecificTaxType($taxType)));
+                                $rupWithoutItbisAndSpecific = Math::sub($rupWithoutItbis, AdditionalTaxType::getRate(AdditionalTaxType::getMatchingSpecificTaxType($taxType)));
 
                                 //3.  "2" / (1 + isc ad valorem rate). This removes the iscAdValorem from the reference unit price
-                                $rupWithoutTaxes = bcdiv($rupWithoutItbisAndSpecific, bcadd(1, AdditionalTaxType::getRate($taxType)));
+                                $rupWithoutTaxes = Math::div($rupWithoutItbisAndSpecific, Math::add(1, AdditionalTaxType::getRate($taxType)));
 
                                 //4.  "3" * isc ad valorem rate. This calculates the ad valorem tax per unit.
-                                $adValoremTaxPerUnit = bcmul($rupWithoutTaxes, AdditionalTaxType::getRate($taxType));
+                                $adValoremTaxPerUnit = Math::mul($rupWithoutTaxes, AdditionalTaxType::getRate($taxType));
 
                                 //5.  "4" * ItemQuantity * referenceQuantity. This calculates the total ad valorem tax
-                                $amount = bcmul($adValoremTaxPerUnit, $item->getItemQuantity()->getValue());
-                                $amount = bcmul($amount, $item->getReferenceQuantity()->getValue());
+                                $amount = Math::mul($adValoremTaxPerUnit, $item->getItemQuantity()->getValue());
+                                $amount = Math::mul($amount, $item->getReferenceQuantity()->getValue());
 
                                 $additionalTax->setAdValoremConsumptionTaxAmount(AdValoremConsumptionTaxAmount::newWithValue($amount));
-                                $additionalTaxesAmount = bcadd($additionalTaxesAmount, $amount);
+                                $additionalTaxesAmount = Math::add($additionalTaxesAmount, $amount);
 
                                 break;
                             default:
@@ -460,21 +475,127 @@ class ECF10 extends ECFNode implements ECFInterface
                     } else {
                         //TODO: Other taxes
                     }
-                    //addi
-                    //setiscE if applicable
-                    //setiscAV if applicable
-                    //set otherTax if applicable
+
+                    $additionalTaxes[] = $additionalTax;
                 }
             }
         }
-        //Create itbis1
-        //create itbis2
-        //Create itbis3
-        //Create itbis1rate
-        //Create itbis2rate
-        //Create itbis3rate
-        //CreateTotalTaxableItbis
-        //CreateTOtalItbis
+
+        //Now lets start putting the data into the total node
+        $totals = new Totals([]);
+
+        $totalTaxableAmount = 0; //Gravable
+        $totalItbisAmount = 0; //Monto
+        $hasItbis = false;
+        if ($itbis1TaxableAmount != 0) {
+            $hasItbis = true;
+
+            //First lets round to 2 decimals
+            $itbis1TaxableAmount = Math::round($itbis1TaxableAmount,2);
+
+            //Add rate node
+            $totals->setItbisT1(ItbisT1::newWithValue(Math::round(Math::mul(CatalogTaxType::getRate(CatalogTaxType::ITBIS_1),100),0)));
+
+            //Add taxable amount node
+            $totals->setTaxableAmountT1(TaxableAmountT1::newWithValue($itbis1TaxableAmount));
+
+            //Add to taxable amount total taxable amount sum
+            $totalTaxableAmount = Math::add($totalTaxableAmount, $itbis1TaxableAmount);
+
+            //Add tax amount node
+            $itbis1Total = Math::mul($itbis1TaxableAmount, CatalogTaxType::getRate(CatalogTaxType::ITBIS_1));
+            $itbis1Total = Math::round($itbis1Total, 2);
+
+            $totals->setTotalItbisT1(TotalItbisT1::newWithValue($itbis1Total));
+
+            //Add tax amount to total tax amount sum
+            $totalItbisAmount = Math::add($totalItbisAmount, $itbis1Total);
+        }
+        if ($itbis2TaxableAmount != 0) {
+            $hasItbis = true;
+
+            //First lets round to 2 decimals
+            $itbis2TaxableAmount = Math::round($itbis2TaxableAmount,2);
+
+            //Add rate node
+            $totals->setItbisT2(ItbisT2::newWithValue(Math::round(Math::mul(CatalogTaxType::getRate(CatalogTaxType::ITBIS_2),100),0)));
+
+            //Add taxable amount node
+            $totals->setTaxableAmountT2(TaxableAmountT2::newWithValue($itbis2TaxableAmount));
+
+            //Add to taxable amount total taxable amount sum
+            $totalTaxableAmount = Math::add($totalTaxableAmount, $itbis2TaxableAmount);
+
+            //Add tax amount node
+            $itbis2Total = Math::mul($itbis2TaxableAmount, CatalogTaxType::getRate(CatalogTaxType::ITBIS_2));
+            $itbis2Total = Math::round($itbis2Total, 2);
+
+            $totals->setTotalItbisT2(TotalItbisT2::newWithValue($itbis2Total));
+
+            //Add tax amount to total tax amount sum
+            $totalItbisAmount = Math::add($totalItbisAmount, $itbis2Total);
+        }
+        if ($itbis3TaxableAmount != 0) {
+            $hasItbis = true;
+
+            //First lets round to 2 decimals
+            $itbis3TaxableAmount = Math::round($itbis3TaxableAmount,2);
+
+            //Add rate node
+            $totals->setItbisT3(ItbisT3::newWithValue(Math::round(Math::mul(CatalogTaxType::getRate(CatalogTaxType::ITBIS_3),100),0)));
+
+            //Add taxable amount node
+            $totals->setTaxableAmountT3(TaxableAmountT3::newWithValue($itbis3TaxableAmount));
+
+            //Add to taxable amount total taxable amount sum
+            $totalTaxableAmount = Math::add($totalTaxableAmount, $itbis3TaxableAmount);
+
+            //Add tax amount node
+            $itbis3Total = Math::mul($itbis3TaxableAmount, CatalogTaxType::getRate(CatalogTaxType::ITBIS_3));
+            $itbis3Total = Math::round($itbis3Total, 2);
+
+            $totals->setTotalItbisT3(TotalItbisT3::newWithValue($itbis3Total));
+
+            //Add tax amount to total tax amount sum
+            $totalItbisAmount = Math::add($totalItbisAmount, $itbis3Total);
+        }
+
+        //Now we create the total nodes related to total itbis
+        if ($hasItbis) {
+            //First we round
+            $totalTaxableAmount = Math::round($totalTaxableAmount,2);
+            $totalItbisAmount = Math::round($totalItbisAmount,2);
+
+            //And now we create the nodes
+            $totals->setTotalTaxableAmount(TotalTaxableAmount::newWithValue($totalTaxableAmount));
+            $totals->setTotalItbis(TotalItbis::newWithValue($totalItbisAmount));
+        }
+
+        if ($exemptAmount != 0) {
+            $totals->setExemptAmount(ExemptAmount::newWithValue($exemptAmount));
+        }
+
+        if ($nonBilledAmount != 0) {
+            $totals->setNonBillableAmount(NonBillableAmount::newWithValue($nonBilledAmount));
+        }
+
+        if (count($additionalTaxes) != 0) {
+            $additionalTaxesTable = new AdditionalTaxesTable([]);
+            $additionalTaxesTable->setAdditionalTaxes($additionalTaxes);
+
+            $totals->setAdditionalTaxesTable($additionalTaxesTable);
+
+            $totals->setAdditionalTaxAmount(AdditionalTaxAmount::newWithValue($additionalTaxesAmount));
+        }
+
+        //Finally we set the total amount (MontoGravadoTotal + Monto Exento + Total ITBIS + Monto del impuesto adicional)
+        $totalAmount = Math::add($totalTaxableAmount, $exemptAmount);
+        $totalAmount = Math::add($totalAmount, $totalItbisAmount);
+        $totalAmount = Math::add($totalAmount, $additionalTaxesAmount);
+        $totalAmount = Math::round($totalAmount,2);
+        $totals->setTotalAmount(TotalAmount::newWithValue($totalAmount));
+
+        $this->getHeader()->setTotals($totals);
         //Create total amount
 
         //Todo: retention total amounts (ITBISRetenido,ISRRetenido, ITBISPercepcion, ISRPercepcion)
@@ -506,7 +627,7 @@ class ECF10 extends ECFNode implements ECFInterface
     public function getEcfTypeName(): ?string
     {
         $ecfTypeValue = $this->getHeader()?->getDocId()?->getEcfType()?->getValue();
-        if(!$ecfTypeValue) {
+        if (!$ecfTypeValue) {
             return null;
         }
 

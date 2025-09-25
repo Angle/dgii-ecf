@@ -3,6 +3,7 @@
 namespace Angle\ECF\Catalog;
 
 use Angle\ECF\Catalog\TaxFactorType;
+use Angle\ECF\Utility\Math;
 
 abstract class TaxType
 {
@@ -69,7 +70,7 @@ abstract class TaxType
             return null;
         }
 
-        return self::$map[$id]['rate'];
+        return Math::div(self::$map[$id]['rate'],100);
     }
 
     public static function exists($id): bool

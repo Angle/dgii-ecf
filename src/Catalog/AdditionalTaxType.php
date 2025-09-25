@@ -3,6 +3,7 @@
 namespace Angle\ECF\Catalog;
 
 use Angle\ECF\Catalog\TaxFactorType;
+use Angle\ECF\Utility\Math;
 use RuntimeException;
 
 abstract class AdditionalTaxType
@@ -432,6 +433,10 @@ abstract class AdditionalTaxType
     {
         if (!self::exists($id)) {
             return null;
+        }
+
+        if(self::$map[$id]['taxFactorType'] == TaxFactorType::RATE) {
+            return Math::div(self::$map[$id]['rate'],100);
         }
 
         return self::$map[$id]['rate'];

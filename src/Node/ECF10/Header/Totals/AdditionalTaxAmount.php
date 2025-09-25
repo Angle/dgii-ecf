@@ -65,6 +65,19 @@ class AdditionalTaxAmount extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): AdditionalTaxAmount
+    {
+        $additionalTaxAmount = new AdditionalTaxAmount([]);
+        $additionalTaxAmount->setValue($value);
+
+        return $additionalTaxAmount;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

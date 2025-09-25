@@ -65,6 +65,19 @@ class NonBillableAmount extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): NonBillableAmount
+    {
+        $nonBillableAmount = new NonBillableAmount([]);
+        $nonBillableAmount->setValue($value);
+
+        return $nonBillableAmount;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

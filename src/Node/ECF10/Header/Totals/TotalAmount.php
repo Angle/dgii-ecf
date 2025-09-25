@@ -65,6 +65,19 @@ class TotalAmount extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): TotalAmount
+    {
+        $totalAmount = new TotalAmount([]);
+        $totalAmount->setValue($value);
+
+        return $totalAmount;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

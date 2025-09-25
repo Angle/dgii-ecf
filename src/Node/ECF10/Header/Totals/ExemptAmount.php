@@ -65,6 +65,19 @@ class ExemptAmount extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): ExemptAmount
+    {
+        $exemptAmount = new ExemptAmount([]);
+        $exemptAmount->setValue($value);
+
+        return $exemptAmount;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

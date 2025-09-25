@@ -65,6 +65,19 @@ class TotalItbisT3 extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): TotalItbisT3
+    {
+        $totalItbis3 = new TotalItbisT3([]);
+        $totalItbis3->setValue($value);
+
+        return $totalItbis3;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 
