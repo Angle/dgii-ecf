@@ -186,21 +186,19 @@ class PDF
             }
             $i[self::PRICE] = $item->getUnitPrice()->getValue();
 
-            if ($item->getAdditionalTaxTable()) {
-                foreach ($item->getAdditionalTaxTable()->getAdditionalTaxes() as $at) {
-                    if ($at->getSpecificConsumptionTaxAmount()) {
-                        $i[self::ISC_SPECIFIC] = $at->getSpecificConsumptionTaxAmount()->getValue();
-                    }
-                    if ($at->getAdValoremConsumptionTaxAmount()) {
-                        $i[self::ISC_AD_VALOREM] = $at->getAdValoremConsumptionTaxAmount()->getValue();
-                    }
-                }
+            if($item->getIscSpecific()) {
+                $i[self::ISC_SPECIFIC] = $item->getIscSpecific($ecf->getAdditionalTaxRates());
             }
+
+            if($item->getIscAdValorem()) {
+                $i[self::ISC_AD_VALOREM] = $item->getIscAdValorem($ecf->getAdditionalTaxRates());
+            }
+
             if ($item->getBillingIndicator()->getValue() == BillingIndicator::ITBIS1) {
-                $i[self::ITBIS] = bcmul($item->getItemAmount()->getValue(), bcdiv(TaxType::getRate(TaxType::ITBIS_18),100, 4));
+                $i[self::ITBIS] = bcmul($item->getItemAmount()->getValue(), bcdiv(TaxType::getRate(TaxType::ITBIS_1),100, 4));
             }
             if ($item->getBillingIndicator()->getValue() == BillingIndicator::ITBIS2) {
-                $i[self::ITBIS] = bcmul($item->getItemAmount()->getValue(), bcdiv(TaxType::getRate(TaxType::ITBIS_16),100, 4));
+                $i[self::ITBIS] = bcmul($item->getItemAmount()->getValue(), bcdiv(TaxType::getRate(TaxType::ITBIS_2),100, 4));
             }
             if ($item->getBillingIndicator()->getValue() == BillingIndicator::ITBIS3) {
                 $i[self::ITBIS] = 0;
