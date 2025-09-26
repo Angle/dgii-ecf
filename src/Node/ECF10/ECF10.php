@@ -526,6 +526,26 @@ class ECF10 extends ECFNode implements ECFInterface
         //Todo: retention total amounts (ITBISRetenido,ISRRetenido, ITBISPercepcion, ISRPercepcion)
     }
 
+    //Goes through its totals->additionalTaxTable and creates populates the additionalTaxRates property from the values in there.
+    //This makes sure we have the correct additionalTaxRates on the object for pdf purposes
+    //If we dont do this, the pdf would just use the preset every time which we dont want, we want it to be tied to whats in the xml instead
+    public function generateAdditionalTaxRates() {
+        $additionalTaxRates = [];
+
+        if($this?->getHeader()?->getTotals()?->getAdditionalTaxesTable()?->getAdditionalTaxes()) {
+            foreach($this->getHeader()->getTotals()->getAdditionalTaxesTable()->getAdditionalTaxes() as $at) {
+                if(array_key_exists($at->getTaxType()->getValue(), $additionalTaxRates) && $additionalTaxRates[$at->getTaxType()->getValue()] != $at->getAdditionalTaxRate()->getValue()) {
+                    //TODO: Exception, we shouldn't have two different values for the same additionalTaxType
+                    continue;
+                }
+                $additionalTaxRates[$at->getTaxType()->getValue()] = $at->getAdditionalTaxRate()->getValue();
+                //TODO: Maybe transform the format depending on if its rate or fee
+            }
+        }
+
+        $this->additionalTaxRates = $additionalTaxRates;
+    }
+
     /**
      * @return string|null
      */

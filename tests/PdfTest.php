@@ -30,6 +30,7 @@ final class PdfTest extends TestCase
                 $dom->load($f);
                 $ecfNode = $dom->firstChild;
                 $ecf = ECF10::createFromDOMNode($ecfNode);
+                $ecf->generateAdditionalTaxRates();
             } catch (\Exception $e) {
                 $ecf = null;
                 $error = $e->getMessage();
