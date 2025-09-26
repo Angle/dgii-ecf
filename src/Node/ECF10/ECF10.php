@@ -377,7 +377,6 @@ class ECF10 extends ECFNode implements ECFInterface
                     }
                     $additionalTax->setAdditionalTaxRate(AdditionalTaxRate::newWithValue($rate));
 
-                    $amount = 0;
                     //Process entries with tax type 06-22
                     if (AdditionalTaxType::isISCSpecific($taxType)) {
                         print_r("Adding additional tax");
@@ -391,86 +390,13 @@ class ECF10 extends ECFNode implements ECFInterface
                         $additionalTaxesAmount = Math::add($additionalTaxesAmount, $amount);
 
                     } elseif (AdditionalTaxType::isISCAdValorem($taxType)) { //Now we process 23-39
-                        switch (AdditionalTaxType::getItemType($taxType)) {
-                            //Process entries with tax type 23-35
-                            case AdditionaltaxType::ALCOHOL:
-                                //Special rules for UNIT "Granel"
-                                if ($item->getUnitOfMeasure()->getValue() == UnitType::BULK) {
-                                    // PrecioUnitarioItem * 1.30 (30% of value) * TasaImpuestoAdicional * CantidadItem
-                                    $amount = Math::mul($item->getUnitPrice()->getValue(),1.30);
-                                    $amount = Math::mul($amount, AdditionalTaxType::getRate($taxType));
-                                    $amount = Math::mul($amount, $item->getItemQuantity()->getValue());
-
-                                    $additionalTax->setAdValoremConsumptionTaxAmount(AdValoremConsumptionTaxAmount::newWithValue($amount));
-                                    $additionalTaxesAmount = Math::add($additionalTaxesAmount, $amount);
-                                } else {
-                                    // ((PrecioUnitarioReferencia / (1+ ITBIS tasa 1)) - (ISPEspecificoMonto/(CantidadItem * CantidadReferencia))) / (1+tasa impuesto adicional especificado) * Cantidad Item * Cantidad Referencia * tasa impuesto adicional especificado
-                                    //1. PrecioUnitarioReferencia / (1 + ITBIS tasa 1). This removes the itbis from the reference unit price
-                                    $rupWithoutItbis = Math::div($item->getReferenceUnitPrice()->getValue(), Math::add(1, CatalogTaxType::getRate(CatalogTaxType::ITBIS_1)));
-
-                                    //1.1 Get ISCEspecificoMonto (this can be sent somewhere else)
-                                    $iscSpecific = Math::mul(AdditionalTaxType::getRate(AdditionalTaxType::getMatchingSpecificTaxType($taxType)), Math::div($item->getAlcoholPercentage()->getValue(),100));
-                                    $iscSpecific = Math::mul($iscSpecific, $item->getReferenceQuantity()->getValue());
-                                    $iscSpecific = Math::mul($iscSpecific, $item->getItemQuantity()->getValue());
-
-                                    if ($item?->getSubquantityTable()?->getSubquantityItems()) {
-                                        foreach ($item->getSubquantityTable()->getSubquantityItems() as $subquantityItem) {
-                                            $iscSpecific = Math::mul($iscSpecific, $subquantityItem->getSubquantity()->getValue());
-                                        }
-                                    }
-
-                                    $iscSpecific = Math::round($iscSpecific,2);
-
-                                    //1.2 Get ISCEspecifico per unit
-                                    $iscSpecificPerUnit = Math::div($iscSpecific, Math::mul($item->getItemQuantity()->getValue(), $item->getReferenceQuantity()->getValue()));
-
-                                    //2.  "1" - matching Specific ISC Amount Per Unit. This removes the iscSpecific from the reference unit price
-                                    $rupWithoutItbisAndSpecific = Math::sub($rupWithoutItbis, $iscSpecificPerUnit);
-
-                                    //3.  "2" / (1 + isc ad valorem rate). This removes the iscAdValorem from the reference unit price
-                                    $rupWithoutTaxes = Math::div($rupWithoutItbisAndSpecific, Math::add(1, AdditionalTaxType::getRate($taxType)));
-
-                                    //4.  "3" * isc ad valorem rate. This calculates the ad valorem tax per unit.
-                                    $adValoremTaxPerUnit = Math::mul($rupWithoutTaxes, AdditionalTaxType::getRate($taxType));
-
-                                    //5.  "4" * ItemQuantity * referenceQuantity. This calculates the total ad valorem tax
-                                    $amount = Math::mul($adValoremTaxPerUnit, $item->getItemQuantity()->getValue());
-                                    $amount = Math::mul($amount, $item->getReferenceQuantity()->getValue());
-
-                                    $amount = Math::round($amount, 2);
-
-                                    $additionalTax->setAdValoremConsumptionTaxAmount(AdValoremConsumptionTaxAmount::newWithValue($amount));
-                                    $additionalTaxesAmount = Math::add($additionalTaxesAmount, $amount);
-                                }
-
-                                break;
-                            //Process entries with tax type 36-39
-                            case AdditionalTaxType::CIGARETTES:
-                                // ((PrecioUnitarioReferencia / (1+ ITBIS tasa 1)) - TasaImpuestoAdicional) / (1+tasa impuesto adicional especificado) * Cantidad Item * Cantidad Referencia * tasa impuesto adicional especificado
-                                //1. PrecioUnitarioReferencia / (1 + ITBIS tasa 1). This removes the itbis from the reference unit price
-                                $rupWithoutItbis = Math::div($item->getReferenceUnitPrice()->getValue(), Math::add(1, CatalogTaxType::getRate(CatalogTaxType::ITBIS_1)));
-
-                                //2.  "1" - matching Specific ISC Rate. This removes the iscSpecific from the reference unit price
-                                $rupWithoutItbisAndSpecific = Math::sub($rupWithoutItbis, AdditionalTaxType::getRate(AdditionalTaxType::getMatchingSpecificTaxType($taxType)));
-
-                                //3.  "2" / (1 + isc ad valorem rate). This removes the iscAdValorem from the reference unit price
-                                $rupWithoutTaxes = Math::div($rupWithoutItbisAndSpecific, Math::add(1, AdditionalTaxType::getRate($taxType)));
-
-                                //4.  "3" * isc ad valorem rate. This calculates the ad valorem tax per unit.
-                                $adValoremTaxPerUnit = Math::mul($rupWithoutTaxes, AdditionalTaxType::getRate($taxType));
-
-                                //5.  "4" * ItemQuantity * referenceQuantity. This calculates the total ad valorem tax
-                                $amount = Math::mul($adValoremTaxPerUnit, $item->getItemQuantity()->getValue());
-                                $amount = Math::mul($amount, $item->getReferenceQuantity()->getValue());
-
-                                $additionalTax->setAdValoremConsumptionTaxAmount(AdValoremConsumptionTaxAmount::newWithValue($amount));
-                                $additionalTaxesAmount = Math::add($additionalTaxesAmount, $amount);
-
-                                break;
-                            default:
-                                break;
-
+                        $amount = $item->getIscAdValorem($this->additionalTaxRates);
+                        if($amount == null) {
+                            continue;
                         }
+
+                        $additionalTax->setAdValoremConsumptionTaxAmount(AdValoremConsumptionTaxAmount::newWithValue($amount));
+                        $additionalTaxesAmount = Math::add($additionalTaxesAmount, $amount);
                     } else {
                         //TODO: Other taxes
                     }

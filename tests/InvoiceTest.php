@@ -154,12 +154,12 @@ final class InvoiceTest extends TestCase
         ];
 
         $additionalTaxRates = [
-            AdditionalTaxType::ISC_RUM_SPECIFIC => '617.39',
+            AdditionalTaxType::ISC_RUM_SPECIFIC => '617.93',
         ];
 
         try {
             $ecf = new ECF10($data);
-            // $ecf->setAdditionalTaxRates($additionalTaxRates);
+            $ecf->setAdditionalTaxRates($additionalTaxRates);
             $ecf->calculateTotals();
         } catch (\Exception $e) {
             $this->fail($e->getMessage());
