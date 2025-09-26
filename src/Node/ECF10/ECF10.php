@@ -151,6 +151,12 @@ class ECF10 extends ECFNode implements ECFInterface
      */
     protected $originalXml = null;
 
+    /**
+     * @var array
+     * This allows the user to inject their own additional tax rates if library is not up to date or they want to use older catalogues
+     * Format example: [AdditionalTaxType::BEER_SPECIFIC => '217.39', AdditionalTaxType::BEER_AD_VALOREM => '.01']
+     */
+    protected $additionalTaxRates = [];
 
     #########################
     ##     CONSTRUCTOR     ##
@@ -363,49 +369,27 @@ class ECF10 extends ECFNode implements ECFInterface
                     $additionalTax = new AdditionalTax([]);
                     $taxType = $at->getTaxType()->getValue();
                     $additionalTax->setTaxType(AdditionalTaxTaxType::newWithValue($taxType));
-                    $additionalTax->setAdditionalTaxRate(AdditionalTaxRate::newWithValue(AdditionalTaxType::getRate($taxType)));
+
+                    $rate = AdditionalTaxType::getRate($taxType);
+                    //Allow to manually inject rate for older invoices if we dont want to use the preset values
+                    if(array_key_exists($taxType,$this->additionalTaxRates)) {
+                        $rate = $this->additionalTaxRates[$taxType];
+                    }
+                    $additionalTax->setAdditionalTaxRate(AdditionalTaxRate::newWithValue($rate));
 
                     $amount = 0;
                     //Process entries with tax type 06-22
                     if (AdditionalTaxType::isISCSpecific($taxType)) {
-                        switch (AdditionalTaxType::getItemType($taxType)) {
-                            //Process entries with tax type 06-18
-                            case AdditionalTaxType::ALCOHOL:
-                                //In case of UNIT 18 "Granel" we dont calculate this node.
-                                if ($item->getUnitOfMeasure()->getValue() == UnitType::BULK) {
-                                    break;
-                                }
+                        print_r("Adding additional tax");
 
-                                //TasaImpuestoAdicional * GradosAlcohol * CantidadReferencia * Subcantidad * CantidadItem
-                                //Ignore subcantidad for now
-                                $amount = Math::mul(AdditionalTaxType::getRate($taxType), Math::div($item->getAlcoholPercentage()->getValue(),100));
-                                $amount = Math::mul($amount, $item->getReferenceQuantity()->getValue());
-                                $amount = Math::mul($amount, $item->getItemQuantity()->getValue());
-
-                                if ($item?->getSubquantityTable()?->getSubquantityItems()) {
-                                    foreach ($item->getSubquantityTable()->getSubquantityItems() as $subquantityItem) {
-                                        $amount = Math::mul($amount, $subquantityItem->getSubquantity()->getValue());
-                                    }
-                                }
-                                $amount = Math::round($amount,2);
-
-                                $additionalTax->setSpecificConsumptionTaxAmount(SpecificConsumptionTaxAmount::newWithValue($amount));
-                                $additionalTaxesAmount = Math::add($additionalTaxesAmount, $amount);
-                                break;
-                            //Process entries with tax type 19-22
-                            case AdditionalTaxType::CIGARETTES:
-                                //Cantidad Item * Cantidad Referencia * Tasa Impuesto Adicional
-                                $amount = Math::mul($item->getItemQuantity()->getValue(), $item->getReferenceQuantity()->getValue());
-                                $amount = Math::mul($amount, AdditionalTaxType::getRate($taxType));
-                                $amount = Math::round($amount,2);
-
-                                $additionalTax->setSpecificConsumptionTaxAmount(SpecificConsumptionTaxAmount::newWithValue($amount));
-                                $additionalTaxesAmount = Math::add($additionalTaxesAmount, $amount);
-                                break;
-                            default:
-                                //Exception
-                                break;
+                        $amount = $item->getIscSpecific($this->additionalTaxRates);
+                        if($amount == null) {
+                            continue;
                         }
+
+                        $additionalTax->setSpecificConsumptionTaxAmount(SpecificConsumptionTaxAmount::newWithValue($amount));
+                        $additionalTaxesAmount = Math::add($additionalTaxesAmount, $amount);
+
                     } elseif (AdditionalTaxType::isISCAdValorem($taxType)) { //Now we process 23-39
                         switch (AdditionalTaxType::getItemType($taxType)) {
                             //Process entries with tax type 23-35
@@ -858,6 +842,23 @@ class ECF10 extends ECFNode implements ECFInterface
         return $this;
     }
 
+    /**
+     * @return array
+     */
+    public function getAdditionalTaxRates(): array
+    {
+        return $this->additionalTaxRates;
+    }
+
+    /**
+     * @param array $additionalTaxRates
+     * @return ECF10
+     */
+    public function setAdditionalTaxRates(array $additionalTaxRates): self
+    {
+        $this->additionalTaxRates = $additionalTaxRates;
+        return $this;
+    }
 
     #########################
     ##      LIBRARY        ##

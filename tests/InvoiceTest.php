@@ -2,6 +2,7 @@
 
 namespace Angle\ECF\Tests;
 
+use Angle\ECF\Catalog\AdditionalTaxType;
 use Angle\ECF\Node\ECF10\ECF10;
 use Angle\ECF\Node\ECF10\Header;
 use Angle\ECF\Node\ECF10\Header\DocId;
@@ -18,11 +19,6 @@ use Angle\ECF\Node\ECF10\Header\Issuer\CompanyName as IssuerCompanyName;
 use Angle\ECF\Node\ECF10\Header\Recipient;
 use Angle\ECF\Node\ECF10\Header\Recipient\CompanyName as RecipientCompanyName;
 use Angle\ECF\Node\ECF10\Header\Recipient\RecipientRNC;
-use Angle\ECF\Node\ECF10\Header\Totals;
-use Angle\ECF\Node\ECF10\Header\Totals\ItbisT1;
-use Angle\ECF\Node\ECF10\Header\Totals\TaxableAmountT1;
-use Angle\ECF\Node\ECF10\Header\Totals\TotalAmount;
-use Angle\ECF\Node\ECF10\Header\Totals\TotalItbisT1;
 use Angle\ECF\Node\ECF10\Header\Version;
 use Angle\ECF\Node\ECF10\ItemDetails;
 use Angle\ECF\Node\ECF10\ItemDetails\Item;
@@ -157,8 +153,13 @@ final class InvoiceTest extends TestCase
 
         ];
 
+        $additionalTaxRates = [
+            AdditionalTaxType::ISC_RUM_SPECIFIC => '617.39',
+        ];
+
         try {
             $ecf = new ECF10($data);
+            // $ecf->setAdditionalTaxRates($additionalTaxRates);
             $ecf->calculateTotals();
         } catch (\Exception $e) {
             $this->fail($e->getMessage());
@@ -168,7 +169,7 @@ final class InvoiceTest extends TestCase
         $this->assertInstanceOf(ECF10::class, $ecf);
         echo PHP_EOL . PHP_EOL;
 
-        print_r($ecf);
+        // print_r($ecf);
 
         echo $ecf->toXML();
     }

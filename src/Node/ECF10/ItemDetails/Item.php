@@ -2,6 +2,9 @@
 
 namespace Angle\ECF\Node\ECF10\ItemDetails;
 
+use Angle\ECF\Catalog\AdditionalTaxType;
+use Angle\ECF\Catalog\TaxType;
+use Angle\ECF\Catalog\UnitType;
 use Angle\ECF\ECFNode;
 use Angle\ECF\ECFException;
 
@@ -29,7 +32,7 @@ use Angle\ECF\Node\ECF10\ItemDetails\Item\SubSurchargeTable;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\AdditionalTaxTable;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\OtherCurrencyDetails;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\ItemAmount;
-
+use Angle\ECF\Utility\Math;
 use DOMDocument;
 use DOMElement;
 use DOMNode;
@@ -345,6 +348,98 @@ class Item extends ECFNode
                     break;
             }
         }
+    }
+
+
+    #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public function getItbis(): ?string
+    {
+        //TODO: Assert these
+        if(!$this->billingIndicator) return null;
+        if(!$this->itemAmount) return null;
+
+        if($this->billingIndicator->getValue() == BillingIndicator::EXEMPT) return null;
+        if($this->billingIndicator->getValue() == BillingIndicator::NOT_BILLED) return null;
+
+        switch($this->billingIndicator->getValue()) {
+            case BillingIndicator::ITBIS1:
+                return Math::round(Math::mul(TaxType::getRate(TaxType::ITBIS_1), $this->itemAmount->getValue()));
+            case BillingIndicator::ITBIS2:
+                return Math::round(Math::mul(TaxType::getRate(TaxType::ITBIS_2), $this->itemAmount->getValue()));
+            case BillingIndicator::ITBIS3:
+                return Math::round(Math::mul(TaxType::getRate(TaxType::ITBIS_3), $this->itemAmount->getValue()));
+            default:
+                return null;
+        }
+    }
+
+    public function getIscSpecific($additionalTaxRates = []): ?string
+    {
+        if(!$this->additionalTaxTable) return null;
+        if(!$this->additionalTaxTable->getAdditionalTaxes()) return null;
+        if(count($this->additionalTaxTable->getAdditionalTaxes()) == 0) return null;
+
+        $found = false;
+        $amount = null;
+
+        foreach($this->getAdditionalTaxTable()->getAdditionalTaxes() as $at) {
+            if(!AdditionalTaxType::isISCSpecific($at->getTaxType()->getValue())) continue;
+
+            if($found) return null; //TODO: Assert. this makes sure there are no multiple ISC Specific taxes for the item
+            $found = true;
+
+            //We can inject the rate but if none is injected then we get the latest rate from the preset
+            if(array_key_exists($at->getTaxType()->getValue(), $additionalTaxRates)) {
+                $rate = $additionalTaxRates[$at->getTaxType()->getValue()];
+            } else {
+                $rate = AdditionalTaxType::getRate($at->getTaxType()->getValue());
+            }
+
+            print_r($at);
+            switch(AdditionalTaxType::getItemType($at->getTaxType()->getValue())) {
+                //Process entries with tax type 06-18
+                case AdditionalTaxType::ALCOHOL:
+                    //In case of UNIT 18 "Granel" we dont calculate this node.
+                    if ($this->getUnitOfMeasure()->getValue() == UnitType::BULK) {
+                        return null;
+                    }
+
+                    //TasaImpuestoAdicional * GradosAlcohol * CantidadReferencia * Subcantidad * CantidadItem
+                    $amount = Math::mul($rate, Math::div($this->getAlcoholPercentage()->getValue(),100));
+                    $amount = Math::mul($amount, $this->getReferenceQuantity()->getValue());
+                    $amount = Math::mul($amount, $this->getItemQuantity()->getValue());
+
+                    if ($this?->getSubquantityTable()?->getSubquantityItems()) {
+                        foreach ($this->getSubquantityTable()->getSubquantityItems() as $subquantityItem) {
+                            $amount = Math::mul($amount, $subquantityItem->getSubquantity()->getValue());
+                        }
+                    }
+                    $amount = Math::round($amount,2);
+
+                    break;
+                //Process entries with tax type 19-22
+                case AdditionalTaxType::CIGARETTES:
+                    //Cantidad Item * Cantidad Referencia * Tasa Impuesto Adicional
+                    $amount = Math::mul($this->getItemQuantity()->getValue(), $this->getReferenceQuantity()->getValue());
+                    $amount = Math::mul($amount, $rate);
+                    $amount = Math::round($amount,2);
+
+                    break;
+                default:
+                    //Exception
+                    return null;
+            }
+        }
+        print_r($found);
+        print_r($amount);
+        if($found) {
+            return $amount;
+        }
+
+        return null;
     }
 
 
