@@ -1,11 +1,11 @@
 <?php
 
-namespace Angle\ECF\Node\ECF10;
+namespace Angle\ECF\Node\ECF10\Pagination\Page;
 
 use Angle\ECF\ECFNode;
 use Angle\ECF\ECFException;
-use Angle\ECF\Node\ECF10\Pagination\Page;
 
+use DateTime;
 
 use DOMDocument;
 use DOMElement;
@@ -13,15 +13,15 @@ use DOMNode;
 use DOMText;
 
 /**
- * @method static Pagination createFromDOMNode(DOMNode $node)
+ * @method static PageItbisT2 createFromDOMNode(DOMNode $node)
  */
-class Pagination extends ECFNode
+class PageItbisT2 extends ECFNode
 {
     #########################
     ##        PRESETS      ##
     #########################
 
-    const NODE_NAME = "Paginacion";
+    const NODE_NAME = "SubtotalItbis2Pagina";
 
     protected static $baseAttributes = [];
 
@@ -32,22 +32,14 @@ class Pagination extends ECFNode
 
     protected static $attributes = [];
 
-    protected static $children = [
-        'page' => [
-            'keywords'  => ['Pagina', 'page'],
-            'class'     => Page::class,
-            'type'      => ECFNode::CHILD_ARRAY,
-        ],
-    ];
+    protected static $children = [];
 
+    protected $value;
 
 
     #########################
     ##      PROPERTIES     ##
     #########################
-
-    /** @var Page[] */
-    protected $pages = [];
 
 
     #########################
@@ -64,14 +56,7 @@ class Pagination extends ECFNode
     {
         foreach ($children as $node) {
             if ($node instanceof DOMText) {
-                continue;
-            }
-
-            switch ($node->localName) {
-                case Page::NODE_NAME:
-                    $page = Page::createFromDomNode($node);
-                    $this->addPage($page);
-                    break;
+                $this->value = $node->nodeValue;
             }
         }
     }
@@ -85,9 +70,7 @@ class Pagination extends ECFNode
     {
         $node = $dom->createElement(self::NODE_NAME);
 
-        foreach ($this->pages as $item) {
-            $node->appendChild($item->toDOMElement($dom));
-        }
+        $node->nodeValue = $this->value;
 
         return $node;
     }
@@ -109,31 +92,13 @@ class Pagination extends ECFNode
     ## GETTERS AND SETTERS ##
     #########################
 
-    /**
-     * @return Page[]
-     */
-    public function getPages(): ?array
+    public function setValue(string $value)
     {
-        return $this->pages;
+        $this->value = $value;
     }
 
-    /**
-     * @param Page[] $pages
-     * @return Pagination
-     */
-    public function setPages(array $pages): self
+    public function getValue(): ?string
     {
-        $this->pages = $pages;
-        return $this;
-    }
-
-    /**
-     * @param Page $page
-     * @return Pagination
-     */
-    public function addPage(Page $page): self
-    {
-        $this->pages[] = $page;
-        return $this;
+        return $this->value;
     }
 }

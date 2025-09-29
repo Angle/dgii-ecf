@@ -101,6 +101,11 @@ class PDF
      */
     public function build(ECF10 $ecf, ?string $logoFilePath = null): string
     {
+        //If we detect a multi-page xml we use that method
+        if($ecf?->getHeader()?->getDocId()?->getTotalPages() && $ecf->getHeader()->getDocId()->getTotalPages() > 1) {
+            return $this->buildMultiPage($ecf, $logoFilePath);
+        }
+
         //First we get the raw items matrix from the ecf item details
         $itemsMatrix = $this->calculateItemsMatrix($ecf);
 
@@ -144,17 +149,136 @@ class PDF
         return $pdfContent;
     }
 
+    /**
+     * @param ECF10 $ecf
+     * @param mixed $logoFilePath
+     * @return string
+     */
+    public function buildMultiPage(ECF10 $ecf, ?string $logoFilePath = null): string
+    {
+        //Create an array of items with the NumeroLinea as key so we can easilya access them.
+        $items = [];
+        foreach ($ecf->getItemDetails()->getItems() as $item) {
+            $items[$item->getLineNumber()->getValue()] = $item;
+        }
+
+        //Get item table header matrix
+        $allItemsMatrix = $this->calculateItemsMatrix($ecf);
+        $existingHeaders = [];
+        foreach ($allItemsMatrix as $i => $item) {
+            foreach ($item as $key => $props) {
+                if ($props == null) {
+                    continue;
+                }
+                if (!in_array($key, $existingHeaders)) {
+                    $existingHeaders[] = $key;
+                }
+            }
+        }
+        $headerMatrix = [];
+        foreach ($this->headers as $key => $props) {
+            if (in_array($key, $existingHeaders)) {
+                $headerMatrix[$key] = $props;
+            }
+        }
+
+        $pagesMatrix = [];
+        foreach ($ecf->getPagination()->getPages() as $page) {
+            $pageData = [
+                'pageNumber' => $page->getPageNumber()->getValue(),
+            ];
+
+            $pageItems = [];
+            foreach($items as $key => $props) {
+                if($props->getLineNumber() >= $page->getLineFrom()->getValue() && $props->getLineNumber() <= $page->getLineTo()->getValue()) {
+                    $pageItems[$key] = $props;
+                }
+            }
+
+            $itemsMatrix = $this->calculateItemsMatrix($ecf, $pageItems);
+
+            //Remove unused headers in itemsMatrix
+            $filteredItemsMatrix = [];
+            foreach ($itemsMatrix as $i => $item) {
+                foreach ($item as $key => $props) {
+                    if (!array_key_exists($key, $headerMatrix)) {
+                        unset($item[$key]);
+                    }
+                }
+                $filteredItemsMatrix[] = $item;
+            }
+            $itemsMatrix = $filteredItemsMatrix;
+
+            $pageData['items'] = $itemsMatrix;
+
+            $totals = [];
+            //If not the last page, get page totals
+            if($page->getPageNumber() != $ecf->getHeader()->getDocId()->getTotalPages()) {
+                if($page->getPageTotalTaxableAmount()) $totals['Subtotal Gravado Página'] = $page->getPageTotalTaxableAmount()->getValue();
+                if($page->getPageExemptAmount()) $totals['Subtotal Exento Página'] = $page->getPageExemptAmount()->getValue();
+                if($page->getPageTotalItbis()) $totals['Subtotal ITBIS Página'] = $page->getPageTotalItbis()->getValue();
+                if($page->getPageAdditionalTaxAmount()) {
+                    $totals['Subtotal Impuesto Adicional Página'] = $page->getPageAdditionalTaxAmount()->getValue();
+                    if($page->getSubtotalAdditionalTax()->getPageSpecificConsumptionTaxAmount()) $totals['Subtotal Impuesto Selectivo al Consumo Página'] = $page->getSubtotalAdditionalTax()->getPageSpecificConsumptionTaxAmount()->getValue();
+                    if($page->getSubtotalAdditionalTax()->getPageOtherTaxesSubtotal()) $totals['Subtotal Otros Impuestos Adicionales Página'] = $page->getSubtotalAdditionalTax()->getPageOtherTaxesSubtotal()->getValue();
+                }
+            } else { //If last page, get totals of everything
+                //Then we calculate totals.
+                $totals = $this->calculateTotals($ecf);
+            }
+
+            $pageData['totals'] = $totals;
+
+            $pagesMatrix[$page->getPageNumber()->getValue()] = $pageData;
+        }
+
+        //Render the html
+        $html = $this->twig->render('multi-pdf.html.twig', [
+            'ecf'   => $ecf,
+            'logo' => $logoFilePath,
+            'itemHeaders' => $headerMatrix,
+            'pagesMatrix' => $pagesMatrix
+        ]);
+
+        //Turn the html into pdf content
+        try {
+            $html2pdf = new Html2Pdf('P', 'LETTER', 'es', true, "UTF-8", [8, 5, 8, 5]);
+            $html2pdf->pdf->SetDisplayMode('real');
+            $html2pdf->setTestIsImage(true);
+            $html2pdf->writeHTML($html);
+            $filename = ''; // filename is ignored when exporting as string
+            $pdfContent = $html2pdf->output($filename, 'S'); // Dest: 'S' means String
+        } catch (Exception $e) {
+            // PDF building error..
+            $this->error = [
+                'type' => 'pdf',
+                'code' => -1,
+                'msg' => $e->getMessage(),
+            ];
+            return false;
+        }
+
+        //Return the pdf content
+        return $pdfContent;
+
+    }
+
     public function getLastError()
     {
         return $this->error;
     }
 
-    private function calculateItemsMatrix(ECF10 $ecf) {
+    private function calculateItemsMatrix(ECF10 $ecf, $items = [])
+    {
+        //We can either calculate it in a specific passed items array or if none is passed we do it over all the items on the ecf
+        if(count($items) == 0) {
+            $items = $ecf->getItemDetails()->getitems();
+        }
 
         //Prepare item matrix for the table.
         $itemsMatrix = [];
 
-        foreach ($ecf->getItemDetails()->getItems() as $item)
+        foreach ($items as $item)
         {
             //Initialize the item with all header keys
             $i = [];
