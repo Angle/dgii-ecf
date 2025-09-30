@@ -102,7 +102,7 @@ class PDF
     public function build(ECF10 $ecf, ?string $logoFilePath = null): string
     {
         //If we detect a multi-page xml we use that method
-        if($ecf?->getHeader()?->getDocId()?->getTotalPages() && $ecf->getHeader()->getDocId()->getTotalPages() > 1) {
+        if ($ecf?->getHeader()?->getDocId()?->getTotalPages() && $ecf->getHeader()->getDocId()->getTotalPages() > 1) {
             return $this->buildMultiPage($ecf, $logoFilePath);
         }
 
@@ -117,7 +117,6 @@ class PDF
 
         //Then we calculate totals.
         $totals = $this->calculateTotals($ecf);
-
         //Render the html
         $html = $this->twig->render('pdf.html.twig', [
             'ecf'   => $ecf,
@@ -190,7 +189,7 @@ class PDF
 
             $pageItems = [];
             foreach($items as $key => $props) {
-                if($props->getLineNumber() >= $page->getLineFrom()->getValue() && $props->getLineNumber() <= $page->getLineTo()->getValue()) {
+                if ($props->getLineNumber() >= $page->getLineFrom()->getValue() && $props->getLineNumber() <= $page->getLineTo()->getValue()) {
                     $pageItems[$key] = $props;
                 }
             }
@@ -213,14 +212,42 @@ class PDF
 
             $totals = [];
             //If not the last page, get page totals
-            if($page->getPageNumber() != $ecf->getHeader()->getDocId()->getTotalPages()) {
-                if($page->getPageTotalTaxableAmount()) $totals['Subtotal Gravado Página'] = $page->getPageTotalTaxableAmount()->getValue();
-                if($page->getPageExemptAmount()) $totals['Subtotal Exento Página'] = $page->getPageExemptAmount()->getValue();
-                if($page->getPageTotalItbis()) $totals['Subtotal ITBIS Página'] = $page->getPageTotalItbis()->getValue();
-                if($page->getPageAdditionalTaxAmount()) {
-                    $totals['Subtotal Impuesto Adicional Página'] = $page->getPageAdditionalTaxAmount()->getValue();
-                    if($page->getSubtotalAdditionalTax()->getPageSpecificConsumptionTaxAmount()) $totals['Subtotal Impuesto Selectivo al Consumo Página'] = $page->getSubtotalAdditionalTax()->getPageSpecificConsumptionTaxAmount()->getValue();
-                    if($page->getSubtotalAdditionalTax()->getPageOtherTaxesSubtotal()) $totals['Subtotal Otros Impuestos Adicionales Página'] = $page->getSubtotalAdditionalTax()->getPageOtherTaxesSubtotal()->getValue();
+            if ($page->getPageNumber() != $ecf->getHeader()->getDocId()->getTotalPages()) {
+                if ($page->getPageTotalTaxableAmount()) {
+                    $totals [] = [
+                        'name' => 'Subtotal Gravado Página',
+                        'value' => $page->getPageTotalTaxableAmount()->getValue(),
+                    ];
+                }
+                if ($page->getPageExemptAmount()) {
+                    $totals [] = [
+                        'name' => 'Subtotal Exento Página',
+                        'value' => $page->getPageExemptAmount()->getValue(),
+                    ];
+                }
+                if ($page->getPageTotalItbis()) {
+                    $totals [] = [
+                        'name' => 'Subtotal ITBIS Página',
+                        'value' => $page->getPageTotalItbis()->getValue(),
+                    ];
+                }
+                if ($page->getPageAdditionalTaxAmount()) {
+                    $totals [] = [
+                        'name' => 'Subtotal Impuesto Adicional Página',
+                        'value' => $page->getPageAdditionalTaxAmount()->getValue(),
+                    ];
+                    if ($page->getSubtotalAdditionalTax()->getPageSpecificConsumptionTaxAmount()) {
+                        $totals [] = [
+                            'name' => 'Subtotal Impuesto Selectivo al Consumo Página',
+                            'value' => $page->getSubtotalAdditionalTax()->getPageSpecificConsumptionTaxAmount()->getValue(),
+                        ];
+                    }
+                    if ($page->getSubtotalAdditionalTax()->getPageOtherTaxesSubtotal()) {
+                        $totals [] = [
+                            'name' => 'Subtotal Otros Impuestos Adicionales Página',
+                            'value' => $page->getSubtotalAdditionalTax()->getPageOtherTaxesSubtotal()->getValue(),
+                        ];
+                    }
                 }
             } else { //If last page, get totals of everything
                 //Then we calculate totals.
@@ -271,7 +298,7 @@ class PDF
     private function calculateItemsMatrix(ECF10 $ecf, $items = [])
     {
         //We can either calculate it in a specific passed items array or if none is passed we do it over all the items on the ecf
-        if(count($items) == 0) {
+        if (count($items) == 0) {
             $items = $ecf->getItemDetails()->getitems();
         }
 
@@ -310,19 +337,19 @@ class PDF
             }
             $i[self::PRICE] = $item->getUnitPrice()->getValue();
 
-            if($item->getIscSpecific()) {
+            if ($item->getIscSpecific()) {
                 $i[self::ISC_SPECIFIC] = $item->getIscSpecific($ecf->getAdditionalTaxRates());
             }
 
-            if($item->getIscAdValorem()) {
+            if ($item->getIscAdValorem()) {
                 $i[self::ISC_AD_VALOREM] = $item->getIscAdValorem($ecf->getAdditionalTaxRates());
             }
 
             if ($item->getBillingIndicator()->getValue() == BillingIndicator::ITBIS1) {
-                $i[self::ITBIS] = bcmul($item->getItemAmount()->getValue(), bcdiv(TaxType::getRate(TaxType::ITBIS_1),100, 4));
+                $i[self::ITBIS] = bcmul($item->getItemAmount()->getValue(), TaxType::getRate(TaxType::ITBIS_1));
             }
             if ($item->getBillingIndicator()->getValue() == BillingIndicator::ITBIS2) {
-                $i[self::ITBIS] = bcmul($item->getItemAmount()->getValue(), bcdiv(TaxType::getRate(TaxType::ITBIS_2),100, 4));
+                $i[self::ITBIS] = bcmul($item->getItemAmount()->getValue(), TaxType::getRate(TaxType::ITBIS_2));
             }
             if ($item->getBillingIndicator()->getValue() == BillingIndicator::ITBIS3) {
                 $i[self::ITBIS] = 0;
@@ -448,25 +475,25 @@ class PDF
                     }
                 }
             }
-            if($iscTotal != 0) {
+            if ($iscTotal != 0) {
                 $totals[] = [
                     'name' => 'Total ISC',
                     'value' => $iscTotal,
                 ];
             }
-            if($cdtTotal != 0) {
+            if ($cdtTotal != 0) {
                 $totals[] = [
                     'name' => 'CDT',
                     'value' => $cdtTotal,
                 ];
             }
-            if($tipTotal != 0) {
+            if ($tipTotal != 0) {
                 $totals[] = [
                     'name' => 'Propina Legal',
                     'value' => $tipTotal,
                 ];
             }
-            if($otherTotal != 0) {
+            if ($otherTotal != 0) {
                 $totals[] = [
                     'name' => 'Otros Impuestos',
                     'value' => $otherTotal,
