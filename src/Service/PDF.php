@@ -6,6 +6,7 @@ use Angle\ECF\Catalog\ECFType;
 use Angle\ECF\Catalog\TaxType;
 use Angle\ECF\Catalog\UnitType;
 use Angle\ECF\Node\ECF10\ECF10;
+use Angle\ECF\Node\ECF10\ItemDetails\Item;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\BillingIndicator;
 use Exception;
 use Twig\Environment as Twig;
@@ -295,6 +296,12 @@ class PDF
         return $this->error;
     }
 
+    /**
+     * Summary of calculateItemsMatrix
+     * @param ECF10 $ecf
+     * @param Item[] $items
+     * @return array<array>
+     */
     private function calculateItemsMatrix(ECF10 $ecf, $items = [])
     {
         //We can either calculate it in a specific passed items array or if none is passed we do it over all the items on the ecf
@@ -345,15 +352,11 @@ class PDF
                 $i[self::ISC_AD_VALOREM] = $item->getIscAdValorem($ecf->getAdditionalTaxRates());
             }
 
-            if ($item->getBillingIndicator()->getValue() == BillingIndicator::ITBIS1) {
-                $i[self::ITBIS] = bcmul($item->getItemAmount()->getValue(), TaxType::getRate(TaxType::ITBIS_1));
+            $itbis = $item->getItbis();
+            if($itbis != null) {
+                $i[self::ITBIS] = $itbis;
             }
-            if ($item->getBillingIndicator()->getValue() == BillingIndicator::ITBIS2) {
-                $i[self::ITBIS] = bcmul($item->getItemAmount()->getValue(), TaxType::getRate(TaxType::ITBIS_2));
-            }
-            if ($item->getBillingIndicator()->getValue() == BillingIndicator::ITBIS3) {
-                $i[self::ITBIS] = 0;
-            }
+
             //discount
             //recharge
             $i[self::AMOUNT] = $item->getItemAmount()->getValue();
