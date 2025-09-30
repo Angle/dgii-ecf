@@ -25,6 +25,7 @@ final class PdfTest extends TestCase
 
         $i = 0;
         foreach ($files as $f) {
+            $i++;
             try {
                 $dom = new DOMDocument();
                 $dom->load($f);
@@ -52,13 +53,11 @@ final class PdfTest extends TestCase
             $this->assertIsString($pdfContent);
             $this->assertNotEmpty($pdfContent);
 
-            $outputFilePath = __DIR__ . '/../test-data/test_output_' . $i . (new DateTime())->format('dmYHis') . '.pdf';
+            $outputFilePath = __DIR__ . '/../test-data/test_output_' .  (new DateTime())->format('dmYHis') . $i . '.pdf';
             file_put_contents($outputFilePath, $pdfContent);
 
             $this->assertFileExists($outputFilePath);
             $this->assertGreaterThan(0, filesize($outputFilePath));
-
-            $i++;
         }
 
     }

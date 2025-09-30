@@ -12,103 +12,113 @@
     </head>
     <body>
 
-
-    <table style="width: 193mm;">
-        <tr>
-            {# top left header #}
-            <td style="width: 75mm;">
-                {% if logo is not null %}
-                    <img src="{{logo}}" height="50">
-                {% endif %}
-                {% if ecf.issuerLegalName is not null %}
-                    <h1> {{ ecf.issuerLegalName }} </h1>
-                {% else %}
-                    <br>
-                {% endif %}
-                {{ ecf.issuerCompanyName }}<br>
-                {% if ecf.branchName is not null %}
-                    Sucursal {{ ecf.branchName }} <br>
-                {% endif %}
-                RNC {{ ecf.issuerRnc }}<br>
-                <small><b>Dirección:</b> {{ ecf.issuerAddress }}</small><br>
-                {% if ecf.issueDate is not null %}
-                    <b>Fecha Emisión:</b> {{ ecf.issueDate }}<br>
-                {% endif %}
-            </td>
-            {# top right header #}
-            <td style="width: 118mm; text-align: right;">
-                <h2>{{ ecf.ecfTypeName }}</h2>
-                <b>e-NCF:</b> {{ ecf.encf }}<br>
-                {% if ecf.isTaxCreditInvoice %}
-                    <b>Fecha Vencimiento:</b> {{ ecf.sequenceExpirationDate }} <br>
-                {% endif %}
-                {% if ecf.isTaxCreditInvoice or ecf.isDebitNote %}
-                    {# TODO: Modified ENCF in case of credit notes and debit notes #}
-                    {# TODO: Modification Type in case of credit notes and debit notes #}
-                {% endif %}
-            </td>
-        </tr>
-    </table><br>
-
-    <hr><br>
-
-    <b>Razón Social Cliente:</b> {{ ecf.recipientCompanyName }}<br>
-    <b>RNC Cliente:</b> {{ ecf.recipientRnc }}<br><br>
-    <div style="page-break-after: always;"></div>
-    <hr><br>
-
-    <table class="items">
-        <thead>
+    {% for key, data in pagesMatrix %}
+        <table style="width: 193mm;">
             <tr>
-                {% for ih in itemHeaders %}
-                    <th style="width:{{ih.size}}mm; text-align:center;">{{ih.name}}</th>
-                {% endfor %}
+                {# top left header #}
+                <td style="width: 75mm;">
+                    {% if logo is not null %}
+                        <img src="{{logo}}" height="50">
+                    {% endif %}
+                    {% if ecf.issuerLegalName is not null %}
+                        <h1> {{ ecf.issuerLegalName }} </h1>
+                    {% else %}
+                        <br>
+                    {% endif %}
+                    {{ ecf.issuerCompanyName }}<br>
+                    {% if ecf.branchName is not null %}
+                        Sucursal {{ ecf.branchName }} <br>
+                    {% endif %}
+                    RNC {{ ecf.issuerRnc }}<br>
+                    <small><b>Dirección:</b> {{ ecf.issuerAddress }}</small><br>
+                    {% if ecf.issueDate is not null %}
+                        <b>Fecha Emisión:</b> {{ ecf.issueDate }}<br>
+                    {% endif %}
+                </td>
+                {# top right header #}
+                <td style="width: 118mm; text-align: right;">
+                    <h2>{{ ecf.ecfTypeName }}</h2>
+                    <b>e-NCF:</b> {{ ecf.encf }}<br>
+                    {% if ecf.isTaxCreditInvoice %}
+                        <b>Fecha Vencimiento:</b> {{ ecf.sequenceExpirationDate }} <br>
+                    {% endif %}
+                    {% if ecf.isTaxCreditInvoice or ecf.isDebitNote %}
+                        {# TODO: Modified ENCF in case of credit notes and debit notes #}
+                        {# TODO: Modification Type in case of credit notes and debit notes #}
+                    {% endif %}
+                </td>
             </tr>
-        </thead>
-        <tbody>
-            {% for item in items %}
+        </table><br>
+
+        <hr><br>
+
+        <b>Razón Social Cliente:</b> {{ ecf.recipientCompanyName }}<br>
+        <b>RNC Cliente:</b> {{ ecf.recipientRnc }}<br><br>
+        <hr><br>
+
+        <table class="items">
+            <thead>
                 <tr>
-                    {% for fieldName, fieldValue in item %}
-                        {% set size = itemHeaders[fieldName].size %}
-                        {% set align = itemHeaders[fieldName].textAlign %}
-                        <td style="width:{{size}}mm; text-align:{{align}};">{{fieldValue|default("-")}}</td>
+                    {% for ih in itemHeaders %}
+                        <th style="width:{{ih.size}}mm; text-align:center;">{{ih.name}}</th>
                     {% endfor %}
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <br><hr><br>
-    <table style = "">
-        <tr>
-            <td style="width: 120mm; ">
-            <qrcode value="www.text.com" ec="M" style="width: 30mm; background-color: white; color: black; border:none;"></qrcode><br>
-                Código de Seguridad: S/DQdu<br>
-                Fecha Firma: 27-01-2025 18:24:07
-            </td>
-            <td style="width: 73mm; vertical-align:top;">
-                <table class="totals" style="">
-                    {% for entry in totals %}
-                        <tr>
-                            <td style="width: 30mm; text-align:right;"><b>{{entry.name}}:</b></td>
-                            <td style="width: 43mm;border: 1px solid #444; text-align:right;background: #eee;">{{entry.value}}</td>
+            </thead>
+            <tbody>
+                {% for item in data.items %}
+                    <tr>
+                        {% for fieldName, fieldValue in item %}
+                            {% set size = itemHeaders[fieldName].size %}
+                            {% set align = itemHeaders[fieldName].textAlign %}
+                            <td style="width:{{size}}mm; text-align:{{align}};">{{fieldValue|default("-")}}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <br><hr><br>
+        <table style = "">
+            <tr>
+                <td style="width: 90mm; ">
+                <qrcode value="www.text.com" ec="M" style="width: 30mm; background-color: white; color: black; border:none;"></qrcode><br>
+                    Código de Seguridad: S/DQdu<br>
+                    Fecha Firma: 27-01-2025 18:24:07
+                </td>
+                <td style="width: 103mm; vertical-align:top;">
+                    <table class="totals" style="">
+                        {% for entry in data.totals %}
+                            <tr>
+                                <td style="width: 60mm; text-align:right;"><b>{{entry.name}}:</b></td>
+                                <td style="width: 43mm;border: 1px solid #444; text-align:right;background: #eee;">{{entry.value}}</td>
+                            </tr>
+                        {% endfor %}
+                        {# <tr>
+                            <td style="width: 30mm; text-align:right;">Subtotal Gravado:</td>
+                            <td style="width: 43mm;border: 1px solid #444; text-align:right;background: #eee;">334,300.00</td>
                         </tr>
-                    {% endfor %}
-                    {# <tr>
-                        <td style="width: 30mm; text-align:right;">Subtotal Gravado:</td>
-                        <td style="width: 43mm;border: 1px solid #444; text-align:right;background: #eee;">334,300.00</td>
-                    </tr>
-                    <tr>
-                        <td style="width: 30mm; text-align:right;">Total ITBIS:</td>
-                        <td style="width: 43mm;border: 1px solid #444; text-align:right;background: #eee;">60,174.00</td>
-                    </tr>
-                    <tr>
-                        <td style="width: 30mm; text-align:right;"><b>Total:</b></td>
-                        <td style="width: 43mm;border: 1px solid #444; text-align:right;background: #eee;"><b>394,474.00</b></td>
-                    </tr> #}
-                </table>
-            </td>
-        </tr>
-    </table>
+                        <tr>
+                            <td style="width: 30mm; text-align:right;">Total ITBIS:</td>
+                            <td style="width: 43mm;border: 1px solid #444; text-align:right;background: #eee;">60,174.00</td>
+                        </tr>
+                        <tr>
+                            <td style="width: 30mm; text-align:right;"><b>Total:</b></td>
+                            <td style="width: 43mm;border: 1px solid #444; text-align:right;background: #eee;"><b>394,474.00</b></td>
+                        </tr> #}
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        {% if key < pagesMatrix|length %}
+            <page_footer >
+                <div style="width: 203mm; text-align: right;">
+                    Página No. [[page_cu]] de [[page_nb]]
+                </div>
+            </page_footer>
+            <div style="page-break-after: always;"></div>
+        {% endif %}
+
+    {% endfor %}
     </body>
 
 </html>

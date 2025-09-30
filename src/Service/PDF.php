@@ -103,7 +103,7 @@ class PDF
     public function build(ECF10 $ecf, ?string $logoFilePath = null): string
     {
         //If we detect a multi-page xml we use that method
-        if ($ecf?->getHeader()?->getDocId()?->getTotalPages() && $ecf->getHeader()->getDocId()->getTotalPages() > 1) {
+        if ($ecf?->getHeader()?->getDocId()?->getTotalPages() && $ecf->getHeader()->getDocId()->getTotalPages()->getValue() > 1) {
             return $this->buildMultiPage($ecf, $logoFilePath);
         }
 
@@ -190,7 +190,7 @@ class PDF
 
             $pageItems = [];
             foreach($items as $key => $props) {
-                if ($props->getLineNumber() >= $page->getLineFrom()->getValue() && $props->getLineNumber() <= $page->getLineTo()->getValue()) {
+                if ($props->getLineNumber()->getValue() >= $page->getLineFrom()->getValue() && $props->getLineNumber()->getValue() <= $page->getLineTo()->getValue()) {
                     $pageItems[$key] = $props;
                 }
             }
@@ -213,7 +213,7 @@ class PDF
 
             $totals = [];
             //If not the last page, get page totals
-            if ($page->getPageNumber() != $ecf->getHeader()->getDocId()->getTotalPages()) {
+            if ($page->getPageNumber()->getValue() != $ecf->getHeader()->getDocId()->getTotalPages()->getValue()) {
                 if ($page->getPageTotalTaxableAmount()) {
                     $totals [] = [
                         'name' => 'Subtotal Gravado Página',
@@ -250,6 +250,11 @@ class PDF
                         ];
                     }
                 }
+
+                $totals[] = [
+                    'name' => 'Monto Total Página',
+                    'value' => $page->getPageSubtotalAmount()->getValue(),
+                ];
             } else { //If last page, get totals of everything
                 //Then we calculate totals.
                 $totals = $this->calculateTotals($ecf);
@@ -267,6 +272,8 @@ class PDF
             'itemHeaders' => $headerMatrix,
             'pagesMatrix' => $pagesMatrix
         ]);
+
+
 
         //Turn the html into pdf content
         try {
