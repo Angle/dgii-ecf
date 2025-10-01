@@ -62,6 +62,12 @@ class ECF10 extends ECFNode implements ECFInterface
 
     const NODE_NAME = 'ECF';
 
+    const LOW_AMOUNT = '250000';
+
+    const QR_CODE_BASE_DOMAIN_LOW_AMOUNT = 'https://fc.dgii.gov.do/eCF/ConsultaTimbreFC?';
+
+    const QR_CODE_BASE_DOMAIN_HIGH_AMOUNT = 'https://ecf.dgii.gov.do/ecf/ConsultaTimbre?';
+
     protected static $baseAttributes = [];
 
 
@@ -698,15 +704,24 @@ class ECF10 extends ECFNode implements ECFInterface
         if(!$this->signature) return null;
         if(!$this->getSecurityCode()) return null;
 
-        //If total above 250:
-        $qrCode = 'https://ecf.dgii.gov.do/ecf/ConsultaTimbre?';
-        $qrCode .= 'RncEmisor=' . $this->getIssuerRnc() . '&';
-        $qrCode .= 'RncComprador=' . $this->getRecipientRnc() . '&';
-        $qrCode .= 'ENCF=' . $this->getEncf() . '&';
-        $qrCode .= 'FechaEmision=' . $this->getIssueDate() . '&';
-        $qrCode .= 'MontoTotal=' . number_format($this->getHeader()->getTotals()->getTotalAmount()->getValue(), 2,'.','') . '&';
-        $qrCode .= 'FechaFirma=' . str_replace(" ", "%20", $this->getSignatureTimestamp()->getValue()) . '&';
-        $qrCode .= 'CodigoSeguridad=' . $this->getSecurityCode();
+        if($this->getHeader()->getTotals()->getTotalAmount()->getValue() >= self::LOW_AMOUNT) {
+            $qrCode = self::QR_CODE_BASE_DOMAIN_HIGH_AMOUNT;
+            $qrCode .= 'RncEmisor=' . $this->getIssuerRnc() . '&';
+            $qrCode .= 'RncComprador=' . $this->getRecipientRnc() . '&';
+            $qrCode .= 'ENCF=' . $this->getEncf() . '&';
+            $qrCode .= 'FechaEmision=' . $this->getIssueDate() . '&';
+            $qrCode .= 'MontoTotal=' . number_format($this->getHeader()->getTotals()->getTotalAmount()->getValue(), 2,'.','') . '&';
+            $qrCode .= 'FechaFirma=' . str_replace(" ", "%20", $this->getSignatureTimestamp()->getValue()) . '&';
+            $qrCode .= 'CodigoSeguridad=' . $this->getSecurityCode();
+        }
+        else {
+            $qrCode = self::QR_CODE_BASE_DOMAIN_LOW_AMOUNT;
+            $qrCode .= 'RncEmisor=' . $this->getIssuerRnc() . '&';
+            $qrCode .= 'ENCF=' . $this->getEncf() . '&';
+            $qrCode .= 'MontoTotal=' . number_format($this->getHeader()->getTotals()->getTotalAmount()->getValue(), 2,'.','') . '&';
+            $qrCode .= 'CodigoSeguridad=' . $this->getSecurityCode();
+        }
+
 
         return $qrCode;
     }
