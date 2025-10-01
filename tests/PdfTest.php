@@ -16,6 +16,9 @@ final class PdfTest extends TestCase
 {
     public function test(): void
     {
+        $pfxFile = __DIR__ . '/../test-data/test_certificate.pfx';
+        $pfxPassword = __DIR__ . '/../test-data/pfx_password.txt';
+
         $twig = new Twig(new FilesystemLoader(realpath(__DIR__ . '/../templates')));
 
         $pdfService = new PDF($twig);
@@ -31,7 +34,25 @@ final class PdfTest extends TestCase
                 $dom->load($f);
                 $ecfNode = $dom->firstChild;
                 $ecf = ECF10::createFromDOMNode($ecfNode);
+                if(!$ecf) {
+                    $this->fail('Failed to create ecf from data');
+                    return;
+                }
                 $ecf->generateAdditionalTaxRates();
+                $ecf->calculateTotals();
+
+                //if xml is not signed lets sign it (we need for qr code)
+                if(!$ecf->getSignature()) {
+                    $ecf = $ecf->sign($pfxFile, file_get_contents($pfxPassword));
+                }
+
+                print_r($ecf->getSignatureTimestamp()->getValue());
+
+                if(!$ecf) {
+                    $this->fail('Failed to sign ecf');
+                    return;
+                }
+
             } catch (\Exception $e) {
                 $ecf = null;
                 $error = $e->getMessage();
