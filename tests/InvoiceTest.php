@@ -47,6 +47,9 @@ final class InvoiceTest extends TestCase
 {
     public function testInvoiceCreation(): void
     {
+        $pfxFile = __DIR__ . '/../test-data/test_certificate.pfx';
+        $pfxPassword = __DIR__ . '/../test-data/pfx_password.txt';
+
         $data = [
             // Section A: Encabezado - All invoice identification and totals.
             Header::NODE_NAME => [
@@ -159,8 +162,17 @@ final class InvoiceTest extends TestCase
 
         try {
             $ecf = new ECF10($data);
+            if(!$ecf) {
+                $this->fail('Failed to create ecf from data');
+                return;
+            }
             $ecf->setAdditionalTaxRates($additionalTaxRates);
             $ecf->calculateTotals();
+            $ecf = $ecf->sign($pfxFile, file_get_contents($pfxPassword));
+            if(!$ecf) {
+                $this->fail('Failed to sign ecf');
+                return;
+            }
         } catch (\Exception $e) {
             $this->fail($e->getMessage());
             return;
@@ -168,8 +180,6 @@ final class InvoiceTest extends TestCase
 
         $this->assertInstanceOf(ECF10::class, $ecf);
         echo PHP_EOL . PHP_EOL;
-
-        // print_r($ecf);
 
         echo $ecf->toXML();
     }

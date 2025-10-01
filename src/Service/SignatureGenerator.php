@@ -7,13 +7,11 @@ use RobRichards\XMLSecLibs\XMLSecurityDSig;
 use RobRichards\XMLSecLibs\XMLSecurityKey;
 
 
-class SignatureGenerator {
-    public function signXml($pfxFile, $pfxPassword, $unsignedXmlFile) : string|bool
+class SignatureGenerator
+{
+    public function signXml($pfxFile, $pfxPassword, $xmlContent) : string|bool
     {
-
         $pfxContent = file_get_contents($pfxFile);
-        $xmlContent = file_get_contents($unsignedXmlFile);
-
 
         $certs = [];
 
@@ -22,8 +20,8 @@ class SignatureGenerator {
             return false;
         }
 
-        $privateKey = $certs['pkey']; // This is your private key
-        $publicKeyCert = $certs['cert']; // This is your public certificate
+        $privateKey = $certs['pkey'];
+        $publicKeyCert = $certs['cert'];
 
         $doc = new DOMDocument();
 

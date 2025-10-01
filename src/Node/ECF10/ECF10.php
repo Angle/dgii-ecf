@@ -33,11 +33,18 @@ use Angle\ECF\Node\ECF10\Header\Totals\TotalItbisT3;
 use Angle\ECF\Node\ECF10\Header\Totals\TotalTaxableAmount;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\AdditionalTaxTable\AdditionalTax\TaxType;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\BillingIndicator;
+use Angle\ECF\Service\SignatureGenerator;
 use Angle\ECF\Utility\Math;
+use DateTime;
+use DateTimeZone;
 use DOMDocument;
 use DOMElement;
 use DOMNode;
 use DOMText;
+use DOMXPath;
+use Exception;
+
+use function PHPSTORM_META\type;
 
 /**
  * @method static ECF10 createFromDOMNode(DOMNode $node)
@@ -100,7 +107,6 @@ class ECF10 extends ECFNode implements ECFInterface
             'class'     => SignatureTimestamp::class,
             'type'      => ECFNode::CHILD_UNIQUE,
         ],
-        //TODO: Signature
     ];
 
 
@@ -143,8 +149,10 @@ class ECF10 extends ECFNode implements ECFInterface
      */
     protected $signatureTimestamp;
 
-    // TODO: Signature
-
+    /**
+     * @var DOMNode
+     */
+    protected $signature;
 
     /**
      * @var string|null
@@ -204,7 +212,8 @@ class ECF10 extends ECFNode implements ECFInterface
                     $signatureTimestamp = SignatureTimestamp::createFromDOMNode($node);
                     $this->setSignatureTimestamp($signatureTimestamp);
                     break;
-                //TODO: Signature
+                case "Signature":
+                    $this->signature = $node;
                 default:
                     //throw new ECFException(sprintf("Unknown children node '%s' in %s", $node->nodeName, self::NODE_NS_NAME));
             }
@@ -266,6 +275,7 @@ class ECF10 extends ECFNode implements ECFInterface
             $node->appendChild($referenceInformationNode);
         }
 
+
         // SignatureTimestamp Node
         if ($this->signatureTimestamp) {
             // TODO: What happens if the signatureTimestamp is not set?
@@ -273,7 +283,16 @@ class ECF10 extends ECFNode implements ECFInterface
             $node->appendChild($signatureTimestampNode);
         }
 
-        //TODO: Signature
+        if ($this->signature instanceof DOMNode) {
+            if ($this->signature->ownerDocument !== $dom) {
+                // Import the node to make it "belong" to the current document
+                $importedSignatureNode = $dom->importNode($this->signature, true); // `true` to import with children
+                $node->appendChild($importedSignatureNode);
+            } else {
+                // The node is already from the same document, so just append it
+                $node->appendChild($this->signature);
+            }
+        }
 
         return $node;
     }
@@ -379,7 +398,6 @@ class ECF10 extends ECFNode implements ECFInterface
 
                     //Process entries with tax type 06-22
                     if (AdditionalTaxType::isISCSpecific($taxType)) {
-                        print_r("Adding additional tax");
 
                         $amount = $item->getIscSpecific($this->additionalTaxRates);
                         if($amount == null) {
@@ -645,6 +663,73 @@ class ECF10 extends ECFNode implements ECFInterface
         return $this->getHeader()?->getRecipient()?->getRecipientRnc()?->getValue();
     }
 
+    public function sign($pfxFile, $pfxPassword): ECF10|bool
+    {
+        $signatureTimestamp = SignatureTimestamp::newWithValue( (new DateTime("now", new DateTimeZone("America/Caracas")))->format("d-m-Y H:i:s"));
+        $this->setSignatureTimestamp($signatureTimestamp);
+
+        $xml = $this->toXML();
+        $signatureGenerator = new SignatureGenerator();
+
+        try {
+            $signedXml = $signatureGenerator->signXml($pfxFile, $pfxPassword, $xml);
+        } catch(Exception $e) {
+            $this->setSignatureTimestamp(null);
+            return false;
+        }
+
+        if(!$signedXml) {
+            $this->setSignatureTimestamp(null);
+            return false;
+        }
+
+        //Now that we have the signed xml lets an ECF10 object with it and return that
+        $dom = new DOMDocument();
+        $dom->loadXML($signedXml);
+        $ecfNode = $dom->firstChild;
+        $signedEcf = ECF10::createFromDOMNode($ecfNode);
+
+        return $signedEcf;
+    }
+
+
+    public function getQr(): ?string
+    {
+        if(!$this->signature) return null;
+        if(!$this->getSecurityCode()) return null;
+
+        //If total above 250:
+        $qrCode = 'https://ecf.dgii.gov.do/ecf/ConsultaTimbre?';
+        $qrCode .= 'RncEmisor=' . $this->getIssuerRnc() . '&';
+        $qrCode .= 'RncComprador=' . $this->getRecipientRnc() . '&';
+        $qrCode .= 'ENCF=' . $this->getEncf() . '&';
+        $qrCode .= 'FechaEmision=' . $this->getIssueDate() . '&';
+        $qrCode .= 'MontoTotal=' . number_format($this->getHeader()->getTotals()->getTotalAmount()->getValue(), 2,'.','') . '&';
+        $qrCode .= 'FechaFirma=' . str_replace(" ", "%20", $this->getSignatureTimestamp()->getValue()) . '&';
+        $qrCode .= 'CodigoSeguridad=' . $this->getSecurityCode();
+
+        return $qrCode;
+    }
+
+    public function getSecurityCode(): ?string
+    {
+        $dom = $this->toDOMDocument();
+
+        $xPath = new DOMXPath($dom);
+
+        $xPath->registerNamespace('ds', 'http://www.w3.org/2000/09/xmldsig#');
+        $nodes = $xPath->query('//ds:SignatureValue');
+        if ($nodes->length > 0) {
+            // Access the first (and only) node in the list
+            $singleNode = $nodes->item(0);
+
+            // Get the string value from that node
+            return substr($singleNode->nodeValue,0,4);
+        }
+
+        return false;
+    }
+
     #########################
     ##  INTERFACE METHODS  ##
     #########################
@@ -805,6 +890,25 @@ class ECF10 extends ECFNode implements ECFInterface
         $this->additionalTaxRates = $additionalTaxRates;
         return $this;
     }
+
+    /**
+     * @return DOMElement|null
+     */
+    public function getSignature(): ?DOMElement
+    {
+        return $this->signature;
+    }
+
+    /**
+     * @param DOMElement $signature
+     * @return ECF10
+     */
+    public function setSignature(DOMElement $signature): self
+    {
+        $this->signature = $signature;
+        return $this;
+    }
+
 
     #########################
     ##      LIBRARY        ##

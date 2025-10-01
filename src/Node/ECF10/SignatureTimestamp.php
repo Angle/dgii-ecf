@@ -36,7 +36,7 @@ class SignatureTimestamp extends ECFNode
         // PropertyName => ClassName (full namespace)
     ];
 
-
+    private $value;
 
     #########################
     ##      PROPERTIES     ##
@@ -55,7 +55,24 @@ class SignatureTimestamp extends ECFNode
      */
     public function setChildrenFromDOMNodes(array $children): void
     {
-        // void
+        foreach ($children as $node) {
+            if ($node instanceof DOMText) {
+                $this->value = $node->nodeValue;
+            }
+        }
+    }
+
+
+    #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): SignatureTimestamp
+    {
+        $signatureTimestamp = new SignatureTimestamp([]);
+        $signatureTimestamp->setValue($value);
+
+        return $signatureTimestamp;
     }
 
 
@@ -67,12 +84,7 @@ class SignatureTimestamp extends ECFNode
     {
         $node = $dom->createElement(self::NODE_NAME);
 
-        foreach ($this->getAttributes() as $attr => $value) {
-            $node->setAttribute($attr, $value);
-        }
-
-
-        // no child nodes for SignatureTimestamp
+        $node->nodeValue = $this->value;
 
         return $node;
     }
@@ -94,4 +106,13 @@ class SignatureTimestamp extends ECFNode
     ## GETTERS AND SETTERS ##
     #########################
 
+    public function setValue(string $value)
+    {
+        $this->value = $value;
+    }
+
+    public function getValue(): ?string
+    {
+        return $this->value;
+    }
 }
