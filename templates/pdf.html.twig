@@ -81,8 +81,8 @@
         <tr>
             <td style="width: 110mm; ">
             <qrcode value={{ecf.qr}} ec="M" style="width: 30mm; background-color: white; color: black; border:none;"></qrcode><br>
-                Código de Seguridad: S/DQdu<br>
-                Fecha Firma: 27-01-2025 18:24:07
+                Código de Seguridad: {{ ecf.securityCode }}<br>
+                Fecha Firma: {{ ecf.signatureTimestampValue }}
             </td>
             <td style="width: 83mm; vertical-align:top;">
                 <table class="totals" style="">

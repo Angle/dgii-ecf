@@ -746,6 +746,11 @@ class ECF10 extends ECFNode implements ECFInterface
         return $qrCode;
     }
 
+    public function getSignatureTimestampValue(): ?string
+    {
+        return $this?->getSignatureTimestamp()?->getValue();
+    }
+
     public function getSecurityCode(): ?string
     {
         $dom = $this->toDOMDocument();
@@ -759,7 +764,7 @@ class ECF10 extends ECFNode implements ECFInterface
             $singleNode = $nodes->item(0);
 
             // Get the string value from that node
-            return substr($singleNode->nodeValue,0,4);
+            return substr($singleNode->nodeValue,0,6);
         }
 
         return false;
