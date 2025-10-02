@@ -845,31 +845,66 @@ class ECF10 extends ECFNode implements ECFInterface
                 $itbisTotalTaxableAmount = 0;
                 $itbisTotalAmount = 0;
                 if($itbis1TaxableAmount > 0) {
+                    //First we round to 2 decimals
+                    $itbis1TaxableAmount = Math::round($itbis1TaxableAmount,2);
+
+                    //Now we set it to its node
                     $page->setPageTaxableAmountT1(PageTaxableAmountT1::newWithValue($itbis1TaxableAmount));
+
+                    //Now we add it to the total taxable amount
                     $itbisTotalTaxableAmount = Math::add($itbisTotalTaxableAmount, $itbis1TaxableAmount);
 
-                    $itbis1Amount = Math::round(Math::mul(CatalogTaxType::getRate(CatalogTaxType::ITBIS_1), $itbis1TaxableAmount));
+                    //Now we calculate the rounded amount
+                    $itbis1Amount = Math::round(Math::mul(CatalogTaxType::getRate(CatalogTaxType::ITBIS_1), $itbis1TaxableAmount),2);
+
+                    //Now we set the rounded taxed amount node
                     $page->setPageItbisT1(PageItbisT1::newWithValue($itbis1Amount));
+
+                    //And finally we add the taxed amount to the total taxed amount
                     $itbisTotalAmount = Math::add($itbisTotalAmount, $itbis1Amount);
                 }
                 if($itbis2TaxableAmount > 0) {
+                    //First we round to 2 decimals
+                    $itbis2TaxableAmount = Math::round($itbis2TaxableAmount,2);
+
+                    //Now we set it to its node
                     $page->setPageTaxableAmountT2(PageTaxableAmountT2::newWithValue($itbis2TaxableAmount));
+
+                    //Now we add it to the total taxable amount
                     $itbisTotalTaxableAmount = Math::add($itbisTotalTaxableAmount, $itbis2TaxableAmount);
 
-                    $itbis2Amount = Math::round(Math::mul(CatalogTaxType::getRate(CatalogTaxType::ITBIS_2), $itbis2TaxableAmount));
+                    //Now we calculate the rounded amount
+                    $itbis2Amount = Math::round(Math::mul(CatalogTaxType::getRate(CatalogTaxType::ITBIS_2), $itbis2TaxableAmount),2);
+
+                    //Now we set the rounded taxed amount node
                     $page->setPageItbisT2(PageItbisT2::newWithValue($itbis2Amount));
+
+                    //And finally we add the taxed amount to the total taxed amount
                     $itbisTotalAmount = Math::add($itbisTotalAmount, $itbis2Amount);
                 }
                 if($itbis3TaxableAmount > 0) {
+                    //First we round to 2 decimals
+                    $itbis3TaxableAmount = Math::round($itbis3TaxableAmount,2);
+
+                    //Now we set it to its node
                     $page->setPageTaxableAmountT3(PageTaxableAmountT3::newWithValue($itbis3TaxableAmount));
+
+                    //Now we add it to the total taxable amount
                     $itbisTotalTaxableAmount = Math::add($itbisTotalTaxableAmount, $itbis3TaxableAmount);
 
-                    $itbis3Amount = Math::round(Math::mul(CatalogTaxType::getRate(CatalogTaxType::ITBIS_3), $itbis3TaxableAmount));
+                    //Now we calculate the rounded amount
+                    $itbis3Amount = Math::round(Math::mul(CatalogTaxType::getRate(CatalogTaxType::ITBIS_3), $itbis2TaxableAmount),2);
+
+                    //Now we set the rounded taxed amount node
                     $page->setPageItbisT3(PageItbisT3::newWithValue($itbis3Amount));
+
+                    //And finally we add the taxed amount to the total taxed amount
                     $itbisTotalAmount = Math::add($itbisTotalAmount, $itbis3Amount);
                 }
 
                 if($itbisTotalTaxableAmount > 0) {
+                    $itbisTotalTaxableAmount = Math::round($itbisTotalTaxableAmount, 2);
+                    $itbisTotalAmount = Math::round($itbisTotalAmount,2);
                     $page->setPageTotalTaxableAmount(PageTotalTaxableAmount::newWithValue($itbisTotalTaxableAmount));
                     $page->setPageTotalItbis(PageTotalItbis::newWithValue($itbisTotalAmount));
                 }
@@ -877,6 +912,7 @@ class ECF10 extends ECFNode implements ECFInterface
 
                 //Set exemptAmount if it exists
                 if($exemptAmount > 0) {
+                    $exemptAmount = Math::round($exemptAmount,2);
                     $page->setPageExemptAmount(PageExemptAmount::newWithValue($exemptAmount));
                 }
 
@@ -890,19 +926,22 @@ class ECF10 extends ECFNode implements ECFInterface
                 if($iscAmount > 0 || $otherAdditionalTaxAmount > 0) {
                     $additionalTaxTable = new SubtotalAdditionalTax([]);
                     if($iscAmount > 0) {
+                        $iscAmount = Math::round($iscAmount, 2);
                         $additionalTaxTable->setPageSpecificConsumptionTaxAmount(PageSpecificConsumptionTaxAmount::newWithValue($iscAmount));
                     }
                     if($otherAdditionalTaxAmount > 0) {
+                        $otherAdditionalTaxAmount = Math::round($otherAdditionalTaxAmount,2);
                         $additionalTaxTable->setPageOtherTaxesSubtotal(PageOtherTaxesSubtotal::newWithValue($otherAdditionalTaxAmount));
                     }
                     $page->setSubtotalAdditionalTax($additionalTaxTable);
-                    $totalAdditionalTaxAmount = Math::add($iscAmount, $otherAdditionalTaxAmount);
+                    $totalAdditionalTaxAmount = Math::round(Math::add($iscAmount, $otherAdditionalTaxAmount), 2);
                     $page->setPageAdditionalTaxAmount(PageAdditionalTaxAmount::newWithValue($totalAdditionalTaxAmount));
                 }
                 $pageSubtotalAmount = Math::add($itbisTotalTaxableAmount, $itbisTotalAmount);
                 $pageSubtotalAmount = Math::add($pageSubtotalAmount, $exemptAmount);
                 $pageSubtotalAmount = Math::add($pageSubtotalAmount, $totalAdditionalTaxAmount);
 
+                $pageSubtotalAmount = Math::round($pageSubtotalAmount,2);
                 $page->setPageSubtotalAmount(PageSubtotalAmount::newWithValue($pageSubtotalAmount));
 
                 $pagination->addPage($page);
