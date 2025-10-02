@@ -63,6 +63,19 @@ class PageExemptAmount extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): PageExemptAmount
+    {
+        $pageExemptAmount = new PageExemptAmount([]);
+        $pageExemptAmount->setValue($value);
+
+        return $pageExemptAmount;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

@@ -63,6 +63,19 @@ class PageOtherTaxesSubtotal extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): PageOtherTaxesSubtotal
+    {
+        $pageOtherTaxesSubtotal = new PageOtherTaxesSubtotal([]);
+        $pageOtherTaxesSubtotal->setValue($value);
+
+        return $pageOtherTaxesSubtotal;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

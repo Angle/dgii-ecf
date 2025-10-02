@@ -63,6 +63,19 @@ class PageTotalItbis extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): PageTotalItbis
+    {
+        $pageTotalItbis = new PageTotalItbis([]);
+        $pageTotalItbis->setValue($value);
+
+        return $pageTotalItbis;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

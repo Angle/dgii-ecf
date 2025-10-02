@@ -34,19 +34,20 @@ final class PdfTest extends TestCase
                 $dom->load($f);
                 $ecfNode = $dom->firstChild;
                 $ecf = ECF10::createFromDOMNode($ecfNode);
+                $ecf->calculateTotals();
                 if(!$ecf) {
                     $this->fail('Failed to create ecf from data');
                     return;
                 }
                 $ecf->generateAdditionalTaxRates();
                 $ecf->calculateTotals();
-
+                $ecf->createPagination(10);
+                print_r($ecf);
                 //if xml is not signed lets sign it (we need for qr code)
                 if(!$ecf->getSignature()) {
                     $ecf = $ecf->sign($pfxFile, file_get_contents($pfxPassword));
                 }
 
-                print_r($ecf->getSignatureTimestamp()->getValue());
 
                 if(!$ecf) {
                     $this->fail('Failed to sign ecf');

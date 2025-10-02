@@ -63,6 +63,19 @@ class LineFrom extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): LineFrom
+    {
+        $lineFrom = new LineFrom([]);
+        $lineFrom->setValue($value);
+
+        return $lineFrom;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

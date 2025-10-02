@@ -65,6 +65,19 @@ class TotalPages extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): TotalPages
+    {
+        $totalPages = new TotalPages([]);
+        $totalPages->setValue($value);
+
+        return $totalPages;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

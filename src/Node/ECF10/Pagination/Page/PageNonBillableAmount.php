@@ -63,6 +63,19 @@ class PageNonBillableAmount extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): PageNonBillableAmount
+    {
+        $pageNonBillableAmount = new PageNonBillableAmount([]);
+        $pageNonBillableAmount->setValue($value);
+
+        return $pageNonBillableAmount;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

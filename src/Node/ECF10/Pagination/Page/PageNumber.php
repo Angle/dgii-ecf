@@ -63,6 +63,19 @@ class PageNumber extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): PageNumber
+    {
+        $pageNumber = new PageNumber([]);
+        $pageNumber->setValue($value);
+
+        return $pageNumber;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

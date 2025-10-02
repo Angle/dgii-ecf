@@ -9,6 +9,7 @@ use Angle\ECF\Catalog\UnitType;
 use Angle\ECF\ECFNode;
 use Angle\ECF\ECFException;
 use Angle\ECF\ECFInterface;
+use Angle\ECF\Node\ECF10\Header\DocId\TotalPages;
 use Angle\ECF\Node\ECF10\Header\Totals;
 use Angle\ECF\Node\ECF10\Header\Totals\AdditionalTaxAmount;
 use Angle\ECF\Node\ECF10\Header\Totals\AdditionalTaxesTable;
@@ -33,6 +34,25 @@ use Angle\ECF\Node\ECF10\Header\Totals\TotalItbisT3;
 use Angle\ECF\Node\ECF10\Header\Totals\TotalTaxableAmount;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\AdditionalTaxTable\AdditionalTax\TaxType;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\BillingIndicator;
+use Angle\ECF\Node\ECF10\Pagination\Page;
+use Angle\ECF\Node\ECF10\Pagination\Page\LineFrom;
+use Angle\ECF\Node\ECF10\Pagination\Page\LineTo;
+use Angle\ECF\Node\ECF10\Pagination\Page\PageAdditionalTaxAmount;
+use Angle\ECF\Node\ECF10\Pagination\Page\PageExemptAmount;
+use Angle\ECF\Node\ECF10\Pagination\Page\PageItbisT1;
+use Angle\ECF\Node\ECF10\Pagination\Page\PageItbisT2;
+use Angle\ECF\Node\ECF10\Pagination\Page\PageItbisT3;
+use Angle\ECF\Node\ECF10\Pagination\Page\PageNonBillableAmount;
+use Angle\ECF\Node\ECF10\Pagination\Page\PageNumber;
+use Angle\ECF\Node\ECF10\Pagination\Page\PageSubtotalAmount;
+use Angle\ECF\Node\ECF10\Pagination\Page\PageTaxableAmountT1;
+use Angle\ECF\Node\ECF10\Pagination\Page\PageTaxableAmountT2;
+use Angle\ECF\Node\ECF10\Pagination\Page\PageTaxableAmountT3;
+use Angle\ECF\Node\ECF10\Pagination\Page\PageTotalItbis;
+use Angle\ECF\Node\ECF10\Pagination\Page\PageTotalTaxableAmount;
+use Angle\ECF\Node\ECF10\Pagination\Page\SubtotalAdditionalTax;
+use Angle\ECF\Node\ECF10\Pagination\Page\SubtotalAdditionalTax\PageOtherTaxesSubtotal;
+use Angle\ECF\Node\ECF10\Pagination\Page\SubtotalAdditionalTax\PageSpecificConsumptionTaxAmount;
 use Angle\ECF\Service\SignatureGenerator;
 use Angle\ECF\Utility\Math;
 use DateTime;
@@ -397,7 +417,7 @@ class ECF10 extends ECFNode implements ECFInterface
 
                     $rate = AdditionalTaxType::getRate($taxType);
                     //Allow to manually inject rate for older invoices if we dont want to use the preset values
-                    if(array_key_exists($taxType,$this->additionalTaxRates)) {
+                    if (array_key_exists($taxType,$this->additionalTaxRates)) {
                         $rate = $this->additionalTaxRates[$taxType];
                     }
                     $additionalTax->setAdditionalTaxRate(AdditionalTaxRate::newWithValue($rate));
@@ -406,7 +426,7 @@ class ECF10 extends ECFNode implements ECFInterface
                     if (AdditionalTaxType::isISCSpecific($taxType)) {
 
                         $amount = $item->getIscSpecific($this->additionalTaxRates);
-                        if($amount == null) {
+                        if ($amount == null) {
                             continue;
                         }
 
@@ -415,7 +435,7 @@ class ECF10 extends ECFNode implements ECFInterface
 
                     } elseif (AdditionalTaxType::isISCAdValorem($taxType)) { //Now we process 23-39
                         $amount = $item->getIscAdValorem($this->additionalTaxRates);
-                        if($amount == null) {
+                        if ($amount == null) {
                             continue;
                         }
 
@@ -556,9 +576,9 @@ class ECF10 extends ECFNode implements ECFInterface
     public function generateAdditionalTaxRates() {
         $additionalTaxRates = [];
 
-        if($this?->getHeader()?->getTotals()?->getAdditionalTaxesTable()?->getAdditionalTaxes()) {
-            foreach($this->getHeader()->getTotals()->getAdditionalTaxesTable()->getAdditionalTaxes() as $at) {
-                if(array_key_exists($at->getTaxType()->getValue(), $additionalTaxRates) && $additionalTaxRates[$at->getTaxType()->getValue()] != $at->getAdditionalTaxRate()->getValue()) {
+        if ($this?->getHeader()?->getTotals()?->getAdditionalTaxesTable()?->getAdditionalTaxes()) {
+            foreach ($this->getHeader()->getTotals()->getAdditionalTaxesTable()->getAdditionalTaxes() as $at) {
+                if (array_key_exists($at->getTaxType()->getValue(), $additionalTaxRates) && $additionalTaxRates[$at->getTaxType()->getValue()] != $at->getAdditionalTaxRate()->getValue()) {
                     //TODO: Exception, we shouldn't have two different values for the same additionalTaxType
                     continue;
                 }
@@ -684,7 +704,7 @@ class ECF10 extends ECFNode implements ECFInterface
             return false;
         }
 
-        if(!$signedXml) {
+        if (!$signedXml) {
             $this->setSignatureTimestamp(null);
             return false;
         }
@@ -701,10 +721,10 @@ class ECF10 extends ECFNode implements ECFInterface
 
     public function getQr(): ?string
     {
-        if(!$this->signature) return null;
-        if(!$this->getSecurityCode()) return null;
+        if (!$this->signature) return null;
+        if (!$this->getSecurityCode()) return null;
 
-        if($this->getHeader()->getTotals()->getTotalAmount()->getValue() >= self::LOW_AMOUNT) {
+        if ($this->getHeader()->getTotals()->getTotalAmount()->getValue() >= self::LOW_AMOUNT) {
             $qrCode = self::QR_CODE_BASE_DOMAIN_HIGH_AMOUNT;
             $qrCode .= 'RncEmisor=' . $this->getIssuerRnc() . '&';
             $qrCode .= 'RncComprador=' . $this->getRecipientRnc() . '&';
@@ -721,7 +741,6 @@ class ECF10 extends ECFNode implements ECFInterface
             $qrCode .= 'MontoTotal=' . number_format($this->getHeader()->getTotals()->getTotalAmount()->getValue(), 2,'.','') . '&';
             $qrCode .= 'CodigoSeguridad=' . $this->getSecurityCode();
         }
-
 
         return $qrCode;
     }
@@ -743,6 +762,155 @@ class ECF10 extends ECFNode implements ECFInterface
         }
 
         return false;
+    }
+
+    /**
+     * Generates and adds the pagination node with its children along with the totalPages node
+     * @return void
+     */
+    public function createPagination(int $itemsPerPage): ECF10
+    {
+        if ($this?->getItemDetails()?->getItems()) {
+            $totalItemsCount = count($this->getItemDetails()->getItems());
+            $pageCount = ceil($totalItemsCount / $itemsPerPage);
+
+            //No pagination required
+            if($pageCount < 2) {
+                return $this;
+            }
+            $this->getHeader()->getDocId()->setTotalPages(TotalPages::newWithValue($pageCount));
+            $pagination = new Pagination([]);
+
+            //Get itemdetails matrix ordered by key being lineNumber so we can access it by that index
+            $itemsMatrix = [];
+            foreach($this->getItemDetails()->getItems() as $item) {
+                $itemsMatrix[$item->getLineNumber()->getValue()] = $item;
+            }
+
+            for ($pageNum = 0; $pageNum < $pageCount; $pageNum++) {
+                $page = new Page([]);
+                $page->setPageNumber(PageNumber::newWithValue($pageNum+1));
+                $lineFrom = ($itemsPerPage * $pageNum) + 1;
+                $lineTo = $lineFrom + $itemsPerPage - 1;
+                if ($lineTo > $totalItemsCount) {
+                    $lineTo = $totalItemsCount;
+                }
+
+                $page->setLineFrom(LineFrom::newWithValue($lineFrom));
+                $page->setLineTo(LineTo::newWithValue($lineTo));
+
+                $itbis1TaxableAmount = 0;
+                $itbis2TaxableAmount = 0;
+                $itbis3TaxableAmount = 0;
+
+                $notBilledAmount = 0;
+                $exemptAmount = 0;
+
+                $iscAmount = 0;
+                $otherAdditionalTaxAmount = 0;
+                for ($i = $lineFrom; $i <= $lineTo; $i++) {
+                    $itemDetails = $itemsMatrix[$i];
+
+                    switch($itemDetails->getBillingIndicator()->getValue()) {
+                        case BillingIndicator::NOT_BILLED:
+                            $notBilledAmount = Math::add($notBilledAmount, $itemDetails->getItemAmount()->getValue());
+                            break;
+                        case BillingIndicator::ITBIS1:
+                            $itbis1TaxableAmount = Math::add($itbis1TaxableAmount, $itemDetails->getItemAmount()->getValue());
+                            break;
+                        case BillingIndicator::ITBIS2:
+                            $itbis2TaxableAmount = Math::add($itbis2TaxableAmount, $itemDetails->getItemAmount()->getValue());
+                            break;
+                        case BillingIndicator::ITBIS3:
+                            $itbis3TaxableAmount = Math::add($itbis3TaxableAmount, $itemDetails->getItemAmount()->getValue());
+                            break;
+                        case BillingIndicator::EXEMPT:
+                            $exemptAmount = Math::add($exemptAmount, $itemDetails->getItemAmount()->getValue());
+                            break;
+                    }
+
+                    $iscSpecific = $itemDetails->getIscSpecific();
+                    if($iscSpecific != null) $iscAmount = Math::add($iscAmount, $iscSpecific);
+                    $iscAdValorem = $itemDetails->getIscAdValorem();
+                    if($iscAdValorem != null) $iscAmount = Math::add($iscAmount, $iscAdValorem);
+
+                    //TODO: Other
+                }
+
+                //Set itbis1,2,3 taxable
+                //Set itbis total taxable
+                //Set itbis1,2,3 amount
+                //Set itbis total amount
+                $itbisTotalTaxableAmount = 0;
+                $itbisTotalAmount = 0;
+                if($itbis1TaxableAmount > 0) {
+                    $page->setPageTaxableAmountT1(PageTaxableAmountT1::newWithValue($itbis1TaxableAmount));
+                    $itbisTotalTaxableAmount = Math::add($itbisTotalTaxableAmount, $itbis1TaxableAmount);
+
+                    $itbis1Amount = Math::round(Math::mul(CatalogTaxType::getRate(CatalogTaxType::ITBIS_1), $itbis1TaxableAmount));
+                    $page->setPageItbisT1(PageItbisT1::newWithValue($itbis1Amount));
+                    $itbisTotalAmount = Math::add($itbisTotalAmount, $itbis1Amount);
+                }
+                if($itbis2TaxableAmount > 0) {
+                    $page->setPageTaxableAmountT2(PageTaxableAmountT2::newWithValue($itbis2TaxableAmount));
+                    $itbisTotalTaxableAmount = Math::add($itbisTotalTaxableAmount, $itbis2TaxableAmount);
+
+                    $itbis2Amount = Math::round(Math::mul(CatalogTaxType::getRate(CatalogTaxType::ITBIS_2), $itbis2TaxableAmount));
+                    $page->setPageItbisT2(PageItbisT2::newWithValue($itbis2Amount));
+                    $itbisTotalAmount = Math::add($itbisTotalAmount, $itbis2Amount);
+                }
+                if($itbis3TaxableAmount > 0) {
+                    $page->setPageTaxableAmountT3(PageTaxableAmountT3::newWithValue($itbis3TaxableAmount));
+                    $itbisTotalTaxableAmount = Math::add($itbisTotalTaxableAmount, $itbis3TaxableAmount);
+
+                    $itbis3Amount = Math::round(Math::mul(CatalogTaxType::getRate(CatalogTaxType::ITBIS_3), $itbis3TaxableAmount));
+                    $page->setPageItbisT3(PageItbisT3::newWithValue($itbis3Amount));
+                    $itbisTotalAmount = Math::add($itbisTotalAmount, $itbis3Amount);
+                }
+
+                if($itbisTotalTaxableAmount > 0) {
+                    $page->setPageTotalTaxableAmount(PageTotalTaxableAmount::newWithValue($itbisTotalTaxableAmount));
+                    $page->setPageTotalItbis(PageTotalItbis::newWithValue($itbisTotalAmount));
+                }
+
+
+                //Set exemptAmount if it exists
+                if($exemptAmount > 0) {
+                    $page->setPageExemptAmount(PageExemptAmount::newWithValue($exemptAmount));
+                }
+
+                //Set Nonbillable amount if it exists
+                if($notBilledAmount > 0) {
+                    $page->setPageNonBillableAmount(PageNonBillableAmount::newWithValue($notBilledAmount));
+                }
+
+                //TODO: Other additional amount
+                $totalAdditionalTaxAmount = 0;
+                if($iscAmount > 0 || $otherAdditionalTaxAmount > 0) {
+                    $additionalTaxTable = new SubtotalAdditionalTax([]);
+                    if($iscAmount > 0) {
+                        $additionalTaxTable->setPageSpecificConsumptionTaxAmount(PageSpecificConsumptionTaxAmount::newWithValue($iscAmount));
+                    }
+                    if($otherAdditionalTaxAmount > 0) {
+                        $additionalTaxTable->setPageOtherTaxesSubtotal(PageOtherTaxesSubtotal::newWithValue($otherAdditionalTaxAmount));
+                    }
+                    $page->setSubtotalAdditionalTax($additionalTaxTable);
+                    $totalAdditionalTaxAmount = Math::add($iscAmount, $otherAdditionalTaxAmount);
+                    $page->setPageAdditionalTaxAmount(PageAdditionalTaxAmount::newWithValue($totalAdditionalTaxAmount));
+                }
+                $pageSubtotalAmount = Math::add($itbisTotalTaxableAmount, $itbisTotalAmount);
+                $pageSubtotalAmount = Math::add($pageSubtotalAmount, $exemptAmount);
+                $pageSubtotalAmount = Math::add($pageSubtotalAmount, $totalAdditionalTaxAmount);
+
+                $page->setPageSubtotalAmount(PageSubtotalAmount::newWithValue($pageSubtotalAmount));
+
+                $pagination->addPage($page);
+            }
+
+            $this->setPagination($pagination);
+        }
+
+        return $this;
     }
 
     #########################

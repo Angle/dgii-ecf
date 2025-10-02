@@ -63,6 +63,19 @@ class PageSubtotalAmount extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): PageSubtotalAmount
+    {
+        $pageSubtotalPageSubtotalAmount = new PageSubtotalAmount([]);
+        $pageSubtotalPageSubtotalAmount->setValue($value);
+
+        return $pageSubtotalPageSubtotalAmount;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

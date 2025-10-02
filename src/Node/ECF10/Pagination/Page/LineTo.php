@@ -63,6 +63,19 @@ class LineTo extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): LineTo
+    {
+        $lineTo = new LineTo([]);
+        $lineTo->setValue($value);
+
+        return $lineTo;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

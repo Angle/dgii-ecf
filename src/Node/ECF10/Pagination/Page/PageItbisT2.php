@@ -63,6 +63,19 @@ class PageItbisT2 extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): PageItbisT2
+    {
+        $pageItbisT2 = new PageItbisT2([]);
+        $pageItbisT2->setValue($value);
+
+        return $pageItbisT2;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

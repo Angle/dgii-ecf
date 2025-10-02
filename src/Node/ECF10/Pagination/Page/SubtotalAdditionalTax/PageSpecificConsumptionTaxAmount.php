@@ -63,6 +63,19 @@ class PageSpecificConsumptionTaxAmount extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): PageSpecificConsumptionTaxAmount
+    {
+        $pageSpecificConsumptionTaxAmount = new PageSpecificConsumptionTaxAmount([]);
+        $pageSpecificConsumptionTaxAmount->setValue($value);
+
+        return $pageSpecificConsumptionTaxAmount;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

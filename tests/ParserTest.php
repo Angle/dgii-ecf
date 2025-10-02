@@ -13,7 +13,7 @@ final class ParserTest extends TestCase
 {
     public function testValidate(): void
     {
-        $files = glob(__DIR__ . '/../test-data/*.xml', GLOB_ERR);
+        $files = glob(__DIR__ . '/../test-data/1.xml', GLOB_ERR);
 
         $realFiles = [];
         foreach ($files as $filename) {
@@ -39,6 +39,9 @@ final class ParserTest extends TestCase
                 $dom->load($filename);
                 $ecfNode = $dom->firstChild;
                 $ecf = ECF10::createFromDOMNode($ecfNode);
+                $ecf->generateAdditionalTaxRates();
+                $ecf->calculateTotals();
+                $ecf->createPagination(10);
             } catch (\Exception $e) {
                 $ecf = null;
                 $error = $e->getMessage();

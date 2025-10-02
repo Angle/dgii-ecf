@@ -63,6 +63,19 @@ class PageTaxableAmountT3 extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): PageTaxableAmountT3
+    {
+        $pageTaxableAmountT3 = new PageTaxableAmountT3([]);
+        $pageTaxableAmountT3->setValue($value);
+
+        return $pageTaxableAmountT3;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

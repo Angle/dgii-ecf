@@ -63,6 +63,19 @@ class PageAdditionalTaxAmount extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): PageAdditionalTaxAmount
+    {
+        $pageAdditionalTaxAmount = new PageAdditionalTaxAmount([]);
+        $pageAdditionalTaxAmount->setValue($value);
+
+        return $pageAdditionalTaxAmount;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 
