@@ -182,6 +182,9 @@ class PDF
             }
         }
 
+        //Lets adjust column size according to column count/size
+        $headerMatrix = $this->adjustHeaderSizes($headerMatrix);
+
         $pagesMatrix = [];
         foreach ($ecf->getPagination()->getPages() as $page) {
             $pageData = [
