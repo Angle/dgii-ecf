@@ -220,43 +220,43 @@ class PDF
                 if ($page->getPageTotalTaxableAmount()) {
                     $totals [] = [
                         'name' => 'Subtotal Gravado Página',
-                        'value' => $page->getPageTotalTaxableAmount()->getValue(),
+                        'value' => number_format($page->getPageTotalTaxableAmount()->getValue(),2),
                     ];
                 }
                 if ($page->getPageExemptAmount()) {
                     $totals [] = [
                         'name' => 'Subtotal Exento Página',
-                        'value' => $page->getPageExemptAmount()->getValue(),
+                        'value' => number_format($page->getPageExemptAmount()->getValue(),2),
                     ];
                 }
                 if ($page->getPageTotalItbis()) {
                     $totals [] = [
                         'name' => 'Subtotal ITBIS Página',
-                        'value' => $page->getPageTotalItbis()->getValue(),
+                        'value' => number_format($page->getPageTotalItbis()->getValue(),2),
                     ];
                 }
                 if ($page->getPageAdditionalTaxAmount()) {
                     $totals [] = [
                         'name' => 'Subtotal Impuesto Adicional Página',
-                        'value' => $page->getPageAdditionalTaxAmount()->getValue(),
+                        'value' => number_format($page->getPageAdditionalTaxAmount()->getValue(),2),
                     ];
                     if ($page->getSubtotalAdditionalTax()->getPageSpecificConsumptionTaxAmount()) {
                         $totals [] = [
                             'name' => 'Subtotal Impuesto Selectivo al Consumo Página',
-                            'value' => $page->getSubtotalAdditionalTax()->getPageSpecificConsumptionTaxAmount()->getValue(),
+                            'value' => number_format($page->getSubtotalAdditionalTax()->getPageSpecificConsumptionTaxAmount()->getValue(),2),
                         ];
                     }
                     if ($page->getSubtotalAdditionalTax()->getPageOtherTaxesSubtotal()) {
                         $totals [] = [
                             'name' => 'Subtotal Otros Impuestos Adicionales Página',
-                            'value' => $page->getSubtotalAdditionalTax()->getPageOtherTaxesSubtotal()->getValue(),
+                            'value' => number_format($page->getSubtotalAdditionalTax()->getPageOtherTaxesSubtotal()->getValue(),2),
                         ];
                     }
                 }
 
                 $totals[] = [
                     'name' => 'Monto Total Página',
-                    'value' => $page->getPageSubtotalAmount()->getValue(),
+                    'value' => number_format($page->getPageSubtotalAmount()->getValue(),2),
                 ];
             } else { //If last page, get totals of everything
                 //Then we calculate totals.
@@ -444,19 +444,19 @@ class PDF
         if ($ecf->getHeader()->getTotals()->getTotalTaxableAmount()) {
             $totals[] = [
                 'name' => 'Subtotal Gravado',
-                'value' => $ecf->getHeader()->getTotals()->getTotalTaxableAmount()->getValue(),
+                'value' => number_format($ecf->getHeader()->getTotals()->getTotalTaxableAmount()->getValue(),2),
             ];
         }
         if ($ecf->getHeader()->getTotals()->getExemptAmount()) {
             $totals[] = [
                 'name' => 'Subtotal Exento',
-                'value' => $ecf->getHeader()->getTotals()->getExemptAmount()->getValue(),
+                'value' => number_format($ecf->getHeader()->getTotals()->getExemptAmount()->getValue(),2),
             ];
         }
         if ($ecf->getHeader()->getTotals()->getTotalItbis()) {
             $totals[] = [
                 'name' => 'Total ITBIS',
-                'value' => $ecf->getHeader()->getTotals()->getTotalItbis()->getValue(),
+                'value' => number_format($ecf->getHeader()->getTotals()->getTotalItbis()->getValue(),2),
             ];
         }
 
@@ -491,25 +491,25 @@ class PDF
             if ($iscTotal != 0) {
                 $totals[] = [
                     'name' => 'Total ISC',
-                    'value' => $iscTotal,
+                    'value' => number_format($iscTotal,2),
                 ];
             }
             if ($cdtTotal != 0) {
                 $totals[] = [
                     'name' => 'CDT',
-                    'value' => $cdtTotal,
+                    'value' => number_format($cdtTotal,2),
                 ];
             }
             if ($tipTotal != 0) {
                 $totals[] = [
                     'name' => 'Propina Legal',
-                    'value' => $tipTotal,
+                    'value' => number_format($tipTotal,2),
                 ];
             }
             if ($otherTotal != 0) {
                 $totals[] = [
                     'name' => 'Otros Impuestos',
-                    'value' => $otherTotal,
+                    'value' => number_format($otherTotal,2),
                 ];
             }
 
@@ -520,7 +520,7 @@ class PDF
 
         $totals[] = [
             'name' => 'Total',
-            'value' => $ecf->getHeader()->getTotals()->getTotalAmount()->getValue(),
+            'value' => number_format($ecf->getHeader()->getTotals()->getTotalAmount()->getValue(),2),
         ];
 
         return $totals;
