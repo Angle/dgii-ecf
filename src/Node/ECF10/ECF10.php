@@ -415,12 +415,13 @@ class ECF10 extends ECFNode implements ECFInterface
                     $taxType = $at->getTaxType()->getValue();
                     $additionalTax->setTaxType(AdditionalTaxTaxType::newWithValue($taxType));
 
-                    $rate = AdditionalTaxType::getRate($taxType);
+                    //Set the additional tax rate node
                     //Allow to manually inject rate for older invoices if we dont want to use the preset values
                     if (array_key_exists($taxType,$this->additionalTaxRates)) {
-                        $rate = $this->additionalTaxRates[$taxType];
+                        $additionalTax->setAdditionalTaxRate(AdditionalTaxRate::newWithValue($this->additionalTaxRates[$taxType]));
+                    } else {
+                        $additionalTax->setAdditionalTaxRate(AdditionalTaxRate::newWithValue(AdditionalTaxType::getRateDisplay($taxType)));
                     }
-                    $additionalTax->setAdditionalTaxRate(AdditionalTaxRate::newWithValue($rate));
 
                     //Process entries with tax type 06-22
                     if (AdditionalTaxType::isISCSpecific($taxType)) {
@@ -554,7 +555,7 @@ class ECF10 extends ECFNode implements ECFInterface
 
             $totals->setAdditionalTaxesTable($additionalTaxesTable);
 
-            $totals->setAdditionalTaxAmount(AdditionalTaxAmount::newWithValue($additionalTaxesAmount));
+            $totals->setAdditionalTaxAmount(AdditionalTaxAmount::newWithValue(Math::round($additionalTaxesAmount,2)));
         }
 
         //Finally we set the total amount (MontoGravadoTotal + Monto Exento + Total ITBIS + Monto del impuesto adicional)

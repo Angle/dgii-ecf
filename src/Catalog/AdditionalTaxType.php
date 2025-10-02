@@ -442,6 +442,14 @@ abstract class AdditionalTaxType
         return self::$map[$id]['rate'];
     }
 
+    public static function getRateDisplay($id): ?string
+    {
+        if (!self::exists($id)) {
+            return null;
+        }
+
+        return Math::round(self::$map[$id]['rate'],2);
+    }
 
     public static function exists($id): bool
     {
