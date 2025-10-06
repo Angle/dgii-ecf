@@ -658,7 +658,7 @@ class ECF10 extends ECFNode implements ECFInterface
                         }
 
                         //Then we convert to other currency by diving over the exchange rate.
-                        $amount = Math::div($amountAsDOP, $this->getHeader()->getOtherCurrency()->getExchangeRate()->getValue());
+                        $amount = Math::round(Math::div($amountAsDOP, $this->getHeader()->getOtherCurrency()->getExchangeRate()->getValue()), 2);
 
                         $iscAmount = Math::add($iscAmount, $amount);
 
@@ -671,7 +671,7 @@ class ECF10 extends ECFNode implements ECFInterface
                             continue;
                         }
 
-                        $amount = Math::div($amountAsDOP, $this->getHeader()->getOtherCurrency()->getExchangeRate()->getValue());
+                        $amount = Math::round(Math::div($amountAsDOP, $this->getHeader()->getOtherCurrency()->getExchangeRate()->getValue()),2);
 
                         $iscAmount = Math::add($iscAmount, $amount);
 
