@@ -385,6 +385,8 @@ class ECF10 extends ECFNode implements ECFInterface
         $nonBilledAmount = 0;
         $additionalTaxesAmount = 0;
 
+        $iscAmount = 0; //We keep track of this for ease of Itbis1 calculation, whose base is itbis1taxable+iscamount
+
         //First get all tax data
         $additionalTaxes = [];
         foreach ($this->getItemDetails()->getItems() as $item) {
@@ -431,6 +433,8 @@ class ECF10 extends ECFNode implements ECFInterface
                             continue;
                         }
 
+                        $iscAmount = Math::add($iscAmount, $amount);
+
                         $additionalTax->setSpecificConsumptionTaxAmount(SpecificConsumptionTaxAmount::newWithValue($amount));
                         $additionalTaxesAmount = Math::add($additionalTaxesAmount, $amount);
 
@@ -439,6 +443,8 @@ class ECF10 extends ECFNode implements ECFInterface
                         if ($amount == null) {
                             continue;
                         }
+
+                        $iscAmount = Math::add($iscAmount, $amount);
 
                         $additionalTax->setAdValoremConsumptionTaxAmount(AdValoremConsumptionTaxAmount::newWithValue($amount));
                         $additionalTaxesAmount = Math::add($additionalTaxesAmount, $amount);
@@ -473,7 +479,7 @@ class ECF10 extends ECFNode implements ECFInterface
             $totalTaxableAmount = Math::add($totalTaxableAmount, $itbis1TaxableAmount);
 
             //Add tax amount node
-            $itbis1Total = Math::mul($itbis1TaxableAmount, CatalogTaxType::getRate(CatalogTaxType::ITBIS_1));
+            $itbis1Total = Math::mul(Math::add($itbis1TaxableAmount, $iscAmount), CatalogTaxType::getRate(CatalogTaxType::ITBIS_1));
             $itbis1Total = Math::round($itbis1Total, 2);
 
             $totals->setTotalItbisT1(TotalItbisT1::newWithValue($itbis1Total));
@@ -715,6 +721,7 @@ class ECF10 extends ECFNode implements ECFInterface
         $dom->loadXML($signedXml);
         $ecfNode = $dom->firstChild;
         $signedEcf = ECF10::createFromDOMNode($ecfNode);
+        $signedEcf->generateAdditionalTaxRates();
 
         return $signedEcf;
     }

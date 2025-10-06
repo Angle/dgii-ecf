@@ -8,6 +8,7 @@ use Angle\ECF\Catalog\UnitType;
 use Angle\ECF\Node\ECF10\ECF10;
 use Angle\ECF\Node\ECF10\ItemDetails\Item;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\BillingIndicator;
+use Angle\ECF\Utility\Math;
 use Exception;
 use Twig\Environment as Twig;
 use Spipu\Html2Pdf\Html2Pdf;
@@ -324,6 +325,8 @@ class PDF
 
         foreach ($items as $item)
         {
+            $total = $item->getItemAmount()->getValue();
+
             //Initialize the item with all header keys
             $i = [];
             foreach ($this->headers as $key => $props)
@@ -354,22 +357,24 @@ class PDF
             }
             $i[self::PRICE] = $item->getUnitPrice()->getValue();
 
-            if ($item->getIscSpecific()) {
-                $i[self::ISC_SPECIFIC] = $item->getIscSpecific($ecf->getAdditionalTaxRates());
+            if($iscSpecific = $item->getIscSpecific($ecf->getAdditionalTaxRates())) {
+                $i[self::ISC_SPECIFIC] = $iscSpecific;
+                $total = Math::add($total, $iscSpecific);
             }
 
-            if ($item->getIscAdValorem()) {
-                $i[self::ISC_AD_VALOREM] = $item->getIscAdValorem($ecf->getAdditionalTaxRates());
+            if ($iscAdValorem = $item->getIscAdValorem($ecf->getAdditionalTaxRates())) {
+                $i[self::ISC_AD_VALOREM] = $iscAdValorem;
+                $total = Math::add($total, $iscAdValorem);
             }
 
-            $itbis = $item->getItbis();
-            if($itbis != null) {
+            if($itbis = $item->getItbis($ecf->getAdditionalTaxRates())) {
                 $i[self::ITBIS] = $itbis;
+                $total = Math::add($total, $itbis);
             }
 
             //discount
             //recharge
-            $i[self::AMOUNT] = $item->getItemAmount()->getValue();
+            $i[self::AMOUNT] = Math::round($total,2);
             $itemsMatrix[] = $i;
         }
         return $itemsMatrix;

@@ -355,7 +355,7 @@ class Item extends ECFNode
     ##   SPECIAL METHODS   ##
     #########################
 
-    public function getItbis(): ?string
+    public function getItbis($additionalTaxRates = []): ?string
     {
         //TODO: Assert these
         if(!$this->billingIndicator) return null;
@@ -366,11 +366,17 @@ class Item extends ECFNode
 
         switch($this->billingIndicator->getValue()) {
             case BillingIndicator::ITBIS1:
-                return Math::round(Math::mul(TaxType::getRate(TaxType::ITBIS_1), $this->itemAmount->getValue()));
+                //For itbis 1, we must add ISCspecific and ISCadValorem to the base amount
+                $taxableAmount = $this->itemAmount->getValue();
+                $iscSpecific = $this->getIscSpecific($additionalTaxRates);
+                $iscAdValorem = $this->getIscAdValorem($additionalTaxRates);
+                if($iscSpecific != null) $taxableAmount = Math::add($taxableAmount, $iscSpecific);
+                if($iscAdValorem != null) $taxableAmount = Math::add($taxableAmount, $iscAdValorem);
+                return Math::round(Math::mul(TaxType::getRate(TaxType::ITBIS_1), $taxableAmount), 2);
             case BillingIndicator::ITBIS2:
-                return Math::round(Math::mul(TaxType::getRate(TaxType::ITBIS_2), $this->itemAmount->getValue()));
+                return Math::round(Math::mul(TaxType::getRate(TaxType::ITBIS_2), $this->itemAmount->getValue()), 2);
             case BillingIndicator::ITBIS3:
-                return Math::round(Math::mul(TaxType::getRate(TaxType::ITBIS_3), $this->itemAmount->getValue()));
+                return Math::round(Math::mul(TaxType::getRate(TaxType::ITBIS_3), $this->itemAmount->getValue()), 2);
             default:
                 return null;
         }
