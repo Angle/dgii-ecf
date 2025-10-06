@@ -1,6 +1,6 @@
 <?php
 
-namespace Angle\ECF\Node\ECF20\Header\OtherCurrency;
+namespace Angle\ECF\Node\ECF10\Header\OtherCurrency;
 
 use Angle\ECF\ECFNode;
 use Angle\ECF\ECFException;

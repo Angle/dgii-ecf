@@ -61,6 +61,19 @@ class OtherCurrencyTotalTaxableAmount extends ECFNode
 
 
     #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public static function newWithValue($value): OtherCurrencyTotalTaxableAmount
+    {
+        $otherCurrencyTotalTaxableAmount = new OtherCurrencyTotalTaxableAmount([]);
+        $otherCurrencyTotalTaxableAmount->setValue($value);
+
+        return $otherCurrencyTotalTaxableAmount;
+    }
+
+
+    #########################
     ## ECF NODE TO DOM TRANSLATION
     #########################
 

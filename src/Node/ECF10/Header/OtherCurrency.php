@@ -14,10 +14,10 @@ use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyTaxableAmountT3;
 use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyTotalItbis;
 use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyTotalItbisT1;
 use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyTotalTaxableAmount;
-use Angle\ECF\Node\ECF20\Header\OtherCurrency\OtherCurrencyTotalItbisT2;
-use Angle\ECF\Node\ECF30\Header\OtherCurrency\OtherCurrencyAdditionalTaxAmount;
-use Angle\ECF\Node\ECF30\Header\OtherCurrency\OtherCurrencyTotalAmount;
-use Angle\ECF\Node\ECF30\Header\OtherCurrency\OtherCurrencyTotalItbisT3;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyTotalItbisT2;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyAdditionalTaxAmount;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyTotalAmount;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyTotalItbisT3;
 use DateTime;
 
 use DOMDocument;

@@ -10,6 +10,19 @@ use Angle\ECF\ECFNode;
 use Angle\ECF\ECFException;
 use Angle\ECF\ECFInterface;
 use Angle\ECF\Node\ECF10\Header\DocId\TotalPages;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyAdditionalTaxesTable;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyAdditionalTaxesTable\OtherCurrencyAdditionalTax;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyAdditionalTaxesTable\OtherCurrencyAdditionalTax\OtherCurrencyAdditionalTaxRate;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyAdditionalTaxesTable\OtherCurrencyAdditionalTax\OtherCurrencyAdValoremConsumptionTaxAmount;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyAdditionalTaxesTable\OtherCurrencyAdditionalTax\OtherCurrencySpecificConsumptionTaxAmount;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyAdditionalTaxesTable\OtherCurrencyAdditionalTax\OtherCurrencyTaxType;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyExemptAmount;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyTaxableAmountT1;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyTaxableAmountT2;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyTaxableAmountT3;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyTotalItbis;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyTotalItbisT1;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyTotalTaxableAmount;
 use Angle\ECF\Node\ECF10\Header\Totals;
 use Angle\ECF\Node\ECF10\Header\Totals\AdditionalTaxAmount;
 use Angle\ECF\Node\ECF10\Header\Totals\AdditionalTaxesTable;
@@ -53,6 +66,10 @@ use Angle\ECF\Node\ECF10\Pagination\Page\PageTotalTaxableAmount;
 use Angle\ECF\Node\ECF10\Pagination\Page\SubtotalAdditionalTax;
 use Angle\ECF\Node\ECF10\Pagination\Page\SubtotalAdditionalTax\PageOtherTaxesSubtotal;
 use Angle\ECF\Node\ECF10\Pagination\Page\SubtotalAdditionalTax\PageSpecificConsumptionTaxAmount;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyTotalItbisT2;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyAdditionalTaxAmount;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyTotalAmount;
+use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyTotalItbisT3;
 use Angle\ECF\Service\SignatureGenerator;
 use Angle\ECF\Utility\Math;
 use DateTime;
@@ -572,9 +589,203 @@ class ECF10 extends ECFNode implements ECFInterface
         $totals->setTotalAmount(TotalAmount::newWithValue($totalAmount));
 
         $this->getHeader()->setTotals($totals);
-        //Create total amount
 
         //Todo: retention total amounts (ITBISRetenido,ISRRetenido, ITBISPercepcion, ISRPercepcion)
+    }
+
+    public function CalculateOtherCurrencyTotals()
+    {
+
+        $itbis1TaxableAmount = 0;
+        $itbis2TaxableAmount = 0;
+        $itbis3TaxableAmount = 0;
+        $exemptAmount = 0;
+        $nonBilledAmount = 0;
+        $additionalTaxesAmount = 0;
+
+        $iscAmount = 0; //We keep track of this for ease of Itbis1 calculation, whose base is itbis1taxable+iscamount
+
+        //First get all tax data
+        $additionalTaxes = [];
+        foreach ($this->getItemDetails()->getItems() as $item) {
+            if($item?->getOtherCurrencyDetails()) {
+                //TODO: return exception
+            }
+            switch ($item->getBillingIndicator()->getValue()) {
+                case BillingIndicator::NOT_BILLED:
+                    $nonBilledAmount = Math::add($nonBilledAmount, $item->getOtherCurrencyDetails()->getOtherCurrencyItemAmount()->getValue());
+                    break;
+                case BillingIndicator::ITBIS1:
+                    $itbis1TaxableAmount = Math::add($itbis1TaxableAmount, $item->getOtherCurrencyDetails()->getOtherCurrencyItemAmount()->getValue());
+                    break;
+                case BillingIndicator::ITBIS2:
+                    $itbis2TaxableAmount = Math::add($itbis2TaxableAmount, $item->getOtherCurrencyDetails()->getOtherCurrencyItemAmount()->getValue());
+                    break;
+                case BillingIndicator::ITBIS3:
+                    $itbis3TaxableAmount = Math::add($itbis3TaxableAmount, $item->getOtherCurrencyDetails()->getOtherCurrencyItemAmount()->getValue());
+                    break;
+                case BillingIndicator::EXEMPT:
+                    $exemptAmount = Math::add($exemptAmount, $item->getOtherCurrencyDetails()->getOtherCurrencyItemAmount()->getValue());
+                    break;
+            }
+
+            //Create a total/additionalTax for each itemdetails/additionalTax
+            if ($item->getAdditionalTaxTable() && $item->getAdditionalTaxTable()->getAdditionalTaxes()) {
+                foreach ($item->getAdditionalTaxTable()->getAdditionalTaxes() as $at) {
+                    //TODO: Send this logic to additionalTax maybe
+
+                    $additionalTax = new OtherCurrencyAdditionalTax([]);
+                    $taxType = $at->getTaxType()->getValue();
+                    $additionalTax->setOtherCurrencyTaxType(OtherCurrencyTaxType::newWithValue($taxType));
+
+                    //Set the additional tax rate node
+                    //Allow to manually inject rate for older invoices if we dont want to use the preset values
+                    if (array_key_exists($taxType,$this->additionalTaxRates)) {
+                        $additionalTax->setOtherCurrencyAdditionalTaxRate(OtherCurrencyAdditionalTaxRate::newWithValue($this->additionalTaxRates[$taxType]));
+                    } else {
+                        $additionalTax->setOtherCurrencyAdditionalTaxRate(OtherCurrencyAdditionalTaxRate::newWithValue(AdditionalTaxType::getRateDisplay($taxType)));
+                    }
+
+
+
+                    //Process entries with tax type 06-22
+                    if (AdditionalTaxType::isISCSpecific($taxType)) {
+
+                        //First we get the amount in DOP
+                        $amountAsDOP = $item->getIscSpecific($this->additionalTaxRates);
+                        if ($amountAsDOP == null) {
+                            continue;
+                        }
+
+                        //Then we convert to other currency by diving over the exchange rate.
+                        $amount = Math::div($amountAsDOP, $this->getHeader()->getOtherCurrency()->getExchangeRate()->getValue());
+
+                        $iscAmount = Math::add($iscAmount, $amount);
+
+                        $additionalTax->setOtherCurrencySpecificConsumptionTaxAmount(OtherCurrencySpecificConsumptionTaxAmount::newWithValue($amount));
+                        $additionalTaxesAmount = Math::add($additionalTaxesAmount, $amount);
+
+                    } elseif (AdditionalTaxType::isISCAdValorem($taxType)) { //Now we process 23-39
+                        $amountAsDOP = $item->getIscAdValorem($this->additionalTaxRates);
+                        if ($amountAsDOP == null) {
+                            continue;
+                        }
+
+                        $amount = Math::div($amountAsDOP, $this->getHeader()->getOtherCurrency()->getExchangeRate()->getValue());
+
+                        $iscAmount = Math::add($iscAmount, $amount);
+
+                        $additionalTax->setOtherCurrencyAdValoremConsumptionTaxAmount(OtherCurrencyAdValoremConsumptionTaxAmount::newWithValue($amount));
+                        $additionalTaxesAmount = Math::add($additionalTaxesAmount, $amount);
+                    } else {
+                        //TODO: Other taxes
+                    }
+
+                    $additionalTaxes[] = $additionalTax;
+                }
+            }
+        }
+
+        //Now lets start putting the data into the total node
+        // $totals = new Totals([]);
+
+        $totalTaxableAmount = 0; //Gravable
+        $totalItbisAmount = 0; //Monto
+        $hasItbis = false;
+        if ($itbis1TaxableAmount != 0) {
+            $hasItbis = true;
+
+            //First lets round to 2 decimals
+            $itbis1TaxableAmount = Math::round($itbis1TaxableAmount,2);
+
+            //Add taxable amount node
+            $this->getHeader()->getOtherCurrency()->setOtherCurrencyTaxableAmountT1(OtherCurrencyTaxableAmountT1::newWithValue($itbis1TaxableAmount));
+
+            //Add to taxable amount total taxable amount sum
+            $totalTaxableAmount = Math::add($totalTaxableAmount, $itbis1TaxableAmount);
+
+            //Add tax amount node
+            $itbis1Total = Math::mul(Math::add($itbis1TaxableAmount, $iscAmount), CatalogTaxType::getRate(CatalogTaxType::ITBIS_1));
+            $itbis1Total = Math::round($itbis1Total, 2);
+
+            $this->getHeader()->getOtherCurrency()->setOtherCurrencyTotalItbisT1(OtherCurrencyTotalItbisT1::newWithValue($itbis1Total));
+
+            //Add tax amount to total tax amount sum
+            $totalItbisAmount = Math::add($totalItbisAmount, $itbis1Total);
+        }
+        if ($itbis2TaxableAmount != 0) {
+            $hasItbis = true;
+
+            //First lets round to 2 decimals
+            $itbis2TaxableAmount = Math::round($itbis2TaxableAmount,2);
+
+            //Add taxable amount node
+            $this->getHeader()->getOtherCurrency()->setOtherCurrencyTaxableAmountT2(OtherCurrencyTaxableAmountT2::newWithValue($itbis2TaxableAmount));
+
+            //Add to taxable amount total taxable amount sum
+            $totalTaxableAmount = Math::add($totalTaxableAmount, $itbis2TaxableAmount);
+
+            //Add tax amount node
+            $itbis2Total = Math::mul($itbis2TaxableAmount, CatalogTaxType::getRate(CatalogTaxType::ITBIS_2));
+            $itbis2Total = Math::round($itbis2Total, 2);
+
+            $this->getHeader()->getOtherCurrency()->setOtherCurrencyTotalItbisT2(OtherCurrencyTotalItbisT2::newWithValue($itbis2Total));
+
+            //Add tax amount to total tax amount sum
+            $totalItbisAmount = Math::add($totalItbisAmount, $itbis2Total);
+        }
+        if ($itbis3TaxableAmount != 0) {
+            $hasItbis = true;
+
+            //First lets round to 2 decimals
+            $itbis3TaxableAmount = Math::round($itbis3TaxableAmount,2);
+
+            //Add taxable amount node
+            $this->getHeader()->getOtherCurrency()->setOtherCurrencyTaxableAmountT3(OtherCurrencyTaxableAmountT3::newWithValue($itbis3TaxableAmount));
+
+            //Add to taxable amount total taxable amount sum
+            $totalTaxableAmount = Math::add($totalTaxableAmount, $itbis3TaxableAmount);
+
+            //Add tax amount node
+            $itbis3Total = Math::mul($itbis3TaxableAmount, CatalogTaxType::getRate(CatalogTaxType::ITBIS_3));
+            $itbis3Total = Math::round($itbis3Total, 2);
+
+            $this->getHeader()->getOtherCurrency()->setOtherCurrencyTotalItbisT3(OtherCurrencyTotalItbisT3::newWithValue($itbis3Total));
+
+            //Add tax amount to total tax amount sum
+            $totalItbisAmount = Math::add($totalItbisAmount, $itbis3Total);
+        }
+
+        //Now we create the total nodes related to total itbis
+        if ($hasItbis) {
+            //First we round
+            $totalTaxableAmount = Math::round($totalTaxableAmount,2);
+            $totalItbisAmount = Math::round($totalItbisAmount,2);
+
+            //And now we create the nodes
+            $this->getHeader()->getOtherCurrency()->setOtherCurrencyTotalTaxableAmount(OtherCurrencyTotalTaxableAmount::newWithValue($totalTaxableAmount));
+            $this->getHeader()->getOtherCurrency()->setOtherCurrencyTotalItbis(OtherCurrencyTotalItbis::newWithValue($totalItbisAmount));
+        }
+
+        if ($exemptAmount != 0) {
+            $this->getHeader()->getOtherCurrency()->setOtherCurrencyExemptAmount(OtherCurrencyExemptAmount::newWithValue($exemptAmount));
+        }
+
+        if (count($additionalTaxes) != 0) {
+            $additionalTaxesTable = new OtherCurrencyAdditionalTaxesTable([]);
+            $additionalTaxesTable->setOtherCurrencyAdditionalTaxes($additionalTaxes);
+
+            $this->getHeader()->getOtherCurrency()->setOtherCurrencyAdditionalTaxesTable($additionalTaxesTable);
+
+            $this->getHeader()->getOtherCurrency()->setOtherCurrencyAdditionalTaxAmount(OtherCurrencyAdditionalTaxAmount::newWithValue(Math::round($additionalTaxesAmount,2)));
+        }
+
+        //Finally we set the total amount (MontoGravadoTotal + Monto Exento + Total ITBIS + Monto del impuesto adicional)
+        $totalAmount = Math::add($totalTaxableAmount, $exemptAmount);
+        $totalAmount = Math::add($totalAmount, $totalItbisAmount);
+        $totalAmount = Math::add($totalAmount, $additionalTaxesAmount);
+        $totalAmount = Math::round($totalAmount,2);
+        $this->getHeader()->getOtherCurrency()->setOtherCurrencyTotalAmount(OtherCurrencyTotalAmount::newWithValue($totalAmount));
     }
 
     //Goes through its totals->additionalTaxTable and creates populates the additionalTaxRates property from the values in there.
