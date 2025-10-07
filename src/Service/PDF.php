@@ -35,48 +35,50 @@ class PDF
     const ISC_AD_VALOREM = "iscAdValorem";
     const ITBIS = "itbis";
     const AMOUNT = "amount";
+    const RECHARGE = "recharges";
+    const DISCOUNT = "descuento";
 
 
     //header map including names and default sizes
     private $headers = [
         self::QUANTITY => [
             "name" => "Cantidad",
-            "size" => 11,
+            "size" => 8,
             "textAlign" => "center",
         ],
         self::DESCRIPTION => [
             "name" => "Descripción",
-            "size" => 30,
+            "size" => 10,
             "textAlign" => "left",
         ],
         self::UNIT_OF_MEASURE => [
             "name" => "Unidad de Medida",
-            "size" => 10,
+            "size" => 7,
             "textAlign" => "center",
         ],
         self::ALCOHOL_PERCENTAGE => [
             "name" => "Grados Alcohol en %",
-            "size" => 8,
+            "size" => 6,
             "textAlign" => "right",
         ],
         self::REFERENCE_UNIT_PRICE => [
             "name" => "PVPci",
-            "size" => 6,
+            "size" => 4,
             "textAlign" => "right",
         ],
         self::PRICE => [
             "name" => "Precio",
-            "size" => 13,
+            "size" => 10,
             "textAlign" => "right",
         ],
         self::ISC_SPECIFIC => [
             "name" => "ISCe",
-            "size" => 11,
+            "size" => 9,
             "textAlign" => "right",
         ],
         self::ISC_AD_VALOREM => [
             "name" => "ISCav",
-            "size" => 11,
+            "size" => 9,
             "textAlign" => "right",
         ],
         self::ITBIS => [
@@ -86,9 +88,19 @@ class PDF
         ],
         self::AMOUNT => [
             "name" => "Valor",
-            "size" => 16,
+            "size" => 13,
             "textAlign" => "right",
         ],
+        self::RECHARGE => [
+            "name" => "Recargo",
+            "size" => 9,
+            "textAlign" => "right",
+        ],
+        self::DISCOUNT => [
+            "name" => "Descuento",
+            "size" => 9,
+            "textAlign" => "right",
+        ]
     ];
 
 
@@ -119,6 +131,7 @@ class PDF
 
         //Then we calculate totals.
         $totals = $this->calculateTotals($ecf);
+
         //Render the html
         $html = $this->twig->render('pdf.html.twig', [
             'ecf'   => $ecf,
@@ -353,28 +366,28 @@ class PDF
             }
             if ($item->getReferenceUnitPrice())
             {
-                $i[self::REFERENCE_UNIT_PRICE] = $item->getReferenceUnitPrice()->getValue();
+                $i[self::REFERENCE_UNIT_PRICE] = number_format($item->getReferenceUnitPrice()->getValue(),2);
             }
-            $i[self::PRICE] = $item->getUnitPrice()->getValue();
+            $i[self::PRICE] = number_format($item->getUnitPrice()->getValue(),2);
 
             if($iscSpecific = $item->getIscSpecific($ecf->getAdditionalTaxRates())) {
-                $i[self::ISC_SPECIFIC] = $iscSpecific;
+                $i[self::ISC_SPECIFIC] = number_format($iscSpecific,2);
                 $total = Math::add($total, $iscSpecific);
             }
 
             if ($iscAdValorem = $item->getIscAdValorem($ecf->getAdditionalTaxRates())) {
-                $i[self::ISC_AD_VALOREM] = $iscAdValorem;
+                $i[self::ISC_AD_VALOREM] = number_format($iscAdValorem,2);
                 $total = Math::add($total, $iscAdValorem);
             }
 
             if($itbis = $item->getItbis($ecf->getAdditionalTaxRates())) {
-                $i[self::ITBIS] = $itbis;
+                $i[self::ITBIS] = number_format($itbis,2);
                 $total = Math::add($total, $itbis);
             }
 
             //discount
             //recharge
-            $i[self::AMOUNT] = Math::round($total,2);
+            $i[self::AMOUNT] = number_format(Math::round($total,2),2);
             $itemsMatrix[] = $i;
         }
         return $itemsMatrix;
@@ -433,6 +446,7 @@ class PDF
         foreach ($headerMatrix as $key => $props) {
             $totalSize += $props["size"];
         }
+
         //Target size is 199
         $difference = 199 - $totalSize;
 
