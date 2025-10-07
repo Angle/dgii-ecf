@@ -138,7 +138,8 @@ class PDF
             'logo' => $logoFilePath,
             'items' => $itemsMatrix,
             'itemHeaders' => $headerMatrix,
-            'totals' => $totals
+            'totals' => $totals,
+            'otherCurrency' => $ecf?->getHeader()?->getOtherCurrency()?->getCurrencyType()->getValue(),
         ]);
 
         //Turn the html into pdf content
@@ -170,6 +171,9 @@ class PDF
      */
     public function buildMultiPage(ECF10 $ecf, ?string $logoFilePath = null): string
     {
+        $hasOtherCurrency = $ecf?->getHeader()?->getOtherCurrency() != null;
+        $exchangeRate = $ecf?->getHeader()?->getOtherCurrency()?->getExchangeRate()?->getValue();
+
         //Create an array of items with the NumeroLinea as key so we can easilya access them.
         $items = [];
         foreach ($ecf->getItemDetails()->getItems() as $item) {
@@ -234,43 +238,43 @@ class PDF
                 if ($page->getPageTotalTaxableAmount()) {
                     $totals [] = [
                         'name' => 'Subtotal Gravado Página',
-                        'value' => number_format($page->getPageTotalTaxableAmount()->getValue(),2),
+                        'value' => number_format($hasOtherCurrency ? Math::round(Math::div($page->getPageTotalTaxableAmount()->getValue(), $exchangeRate),2)  : $page->getPageTotalTaxableAmount()->getValue(),2),
                     ];
                 }
                 if ($page->getPageExemptAmount()) {
                     $totals [] = [
                         'name' => 'Subtotal Exento Página',
-                        'value' => number_format($page->getPageExemptAmount()->getValue(),2),
+                        'value' => number_format($hasOtherCurrency ? Math::round(Math::div($page->getPageExemptAmount()->getValue(), $exchangeRate),2) : $page->getPageExemptAmount()->getValue(),2),
                     ];
                 }
                 if ($page->getPageTotalItbis()) {
                     $totals [] = [
                         'name' => 'Subtotal ITBIS Página',
-                        'value' => number_format($page->getPageTotalItbis()->getValue(),2),
+                        'value' => number_format($hasOtherCurrency ? Math::round(Math::div($page->getPageTotalItbis()->getValue(), $exchangeRate),2) : $page->getPageTotalItbis()->getValue(),2),
                     ];
                 }
                 if ($page->getPageAdditionalTaxAmount()) {
                     $totals [] = [
                         'name' => 'Subtotal Impuesto Adicional Página',
-                        'value' => number_format($page->getPageAdditionalTaxAmount()->getValue(),2),
+                        'value' => number_format($hasOtherCurrency ? Math::round(Math::div($page->getPageAdditionalTaxAmount()->getValue(), $exchangeRate),2) : $page->getPageAdditionalTaxAmount()->getValue(),2),
                     ];
                     if ($page->getSubtotalAdditionalTax()->getPageSpecificConsumptionTaxAmount()) {
                         $totals [] = [
                             'name' => 'Subtotal Impuesto Selectivo al Consumo Página',
-                            'value' => number_format($page->getSubtotalAdditionalTax()->getPageSpecificConsumptionTaxAmount()->getValue(),2),
+                            'value' => number_format($hasOtherCurrency ? Math::round(Math::div($page->getSubtotalAdditionalTax()->getPageSpecificConsumptionTaxAmount()->getValue(), $exchangeRate),2) : $page->getSubtotalAdditionalTax()->getPageSpecificConsumptionTaxAmount()->getValue(),2),
                         ];
                     }
                     if ($page->getSubtotalAdditionalTax()->getPageOtherTaxesSubtotal()) {
                         $totals [] = [
                             'name' => 'Subtotal Otros Impuestos Adicionales Página',
-                            'value' => number_format($page->getSubtotalAdditionalTax()->getPageOtherTaxesSubtotal()->getValue(),2),
+                            'value' => number_format($hasOtherCurrency ? Math::round(Math::div($page->getSubtotalAdditionalTax()->getPageOtherTaxesSubtotal()->getValue(), $exchangeRate),2) : $page->getSubtotalAdditionalTax()->getPageOtherTaxesSubtotal()->getValue(),2),
                         ];
                     }
                 }
 
                 $totals[] = [
                     'name' => 'Monto Total Página',
-                    'value' => number_format($page->getPageSubtotalAmount()->getValue(),2),
+                    'value' => number_format($hasOtherCurrency ? Math::round(Math::div($page->getPageSubtotalAmount()->getValue(), $exchangeRate),2) : $page->getPageSubtotalAmount()->getValue(),2),
                 ];
             } else { //If last page, get totals of everything
                 //Then we calculate totals.
@@ -287,7 +291,8 @@ class PDF
             'ecf'   => $ecf,
             'logo' => $logoFilePath,
             'itemHeaders' => $headerMatrix,
-            'pagesMatrix' => $pagesMatrix
+            'pagesMatrix' => $pagesMatrix,
+            'otherCurrency' => $ecf?->getHeader()?->getOtherCurrency()?->getCurrencyType()->getValue(),
         ]);
 
 
@@ -328,6 +333,8 @@ class PDF
      */
     private function calculateItemsMatrix(ECF10 $ecf, $items = [])
     {
+        $hasOtherCurrency = $ecf?->getHeader()?->getOtherCurrency() != null;
+
         //We can either calculate it in a specific passed items array or if none is passed we do it over all the items on the ecf
         if (count($items) == 0) {
             $items = $ecf->getItemDetails()->getitems();
@@ -338,7 +345,11 @@ class PDF
 
         foreach ($items as $item)
         {
-            $total = $item->getItemAmount()->getValue();
+            if($hasOtherCurrency) {
+                $total = $item->getOtherCurrencyDetails()->getOtherCurrencyItemAmount()->getValue();
+            } else {
+                $total = $item->getItemAmount()->getValue();
+            }
 
             //Initialize the item with all header keys
             $i = [];
@@ -368,19 +379,34 @@ class PDF
             {
                 $i[self::REFERENCE_UNIT_PRICE] = number_format($item->getReferenceUnitPrice()->getValue(),2);
             }
-            $i[self::PRICE] = number_format($item->getUnitPrice()->getValue(),2);
+
+            if($hasOtherCurrency) {
+                $i[self::PRICE] = number_format($item->getOtherCurrencyDetails()->getOtherCurrencyPrice()->getValue(),2);
+            } else {
+                $i[self::PRICE] = number_format($item->getUnitPrice()->getValue(),2);
+            }
 
             if($iscSpecific = $item->getIscSpecific($ecf->getAdditionalTaxRates())) {
-                $i[self::ISC_SPECIFIC] = number_format($iscSpecific,2);
+                if($hasOtherCurrency) {
+                    $iscSpecific = Math::div($iscSpecific, $ecf->getHeader()->getOtherCurrency()->getExchangeRate()->getValue());
+                }
+
+                $i[self::ISC_SPECIFIC] = number_format(Math::round($iscSpecific,2),2);
                 $total = Math::add($total, $iscSpecific);
             }
 
             if ($iscAdValorem = $item->getIscAdValorem($ecf->getAdditionalTaxRates())) {
-                $i[self::ISC_AD_VALOREM] = number_format($iscAdValorem,2);
+                if($hasOtherCurrency) {
+                    $iscAdValorem = Math::div($iscAdValorem, $ecf->getHeader()->getOtherCurrency()->getExchangeRate()->getValue());
+                }
+                $i[self::ISC_AD_VALOREM] = number_format(Math::round($iscAdValorem,2),2);
                 $total = Math::add($total, $iscAdValorem);
             }
-
             if($itbis = $item->getItbis($ecf->getAdditionalTaxRates())) {
+                if($hasOtherCurrency) {
+                    $itbis = $item->getItbisOtherCurrency($ecf->getHeader()->getOtherCurrency()->getExchangeRate()->getValue(), $ecf->getAdditionalTaxRates());
+                }
+
                 $i[self::ITBIS] = number_format($itbis,2);
                 $total = Math::add($total, $itbis);
             }
@@ -458,24 +484,26 @@ class PDF
 
     private function calculateTotals(ECF10 $ecf)
     {
+        $hasOtherCurrency = $ecf?->getHeader()?->getOtherCurrency() != null;
+
         $totals = [];
 
         if ($ecf->getHeader()->getTotals()->getTotalTaxableAmount()) {
             $totals[] = [
                 'name' => 'Subtotal Gravado',
-                'value' => number_format($ecf->getHeader()->getTotals()->getTotalTaxableAmount()->getValue(),2),
+                'value' => number_format($hasOtherCurrency ? $ecf->getHeader()->getOtherCurrency()->getOtherCurrencyTotalTaxableAmount()->getValue() : $ecf->getHeader()->getTotals()->getTotalTaxableAmount()->getValue(),2),
             ];
         }
         if ($ecf->getHeader()->getTotals()->getExemptAmount()) {
             $totals[] = [
                 'name' => 'Subtotal Exento',
-                'value' => number_format($ecf->getHeader()->getTotals()->getExemptAmount()->getValue(),2),
+                'value' => number_format($hasOtherCurrency ? $ecf->getHeader()->getOtherCurrency()->getOtherCurrencyExemptAmount()->getValue() : $ecf->getHeader()->getTotals()->getExemptAmount()->getValue(),2),
             ];
         }
         if ($ecf->getHeader()->getTotals()->getTotalItbis()) {
             $totals[] = [
                 'name' => 'Total ITBIS',
-                'value' => number_format($ecf->getHeader()->getTotals()->getTotalItbis()->getValue(),2),
+                'value' => number_format($hasOtherCurrency ? $ecf->getHeader()->getOtherCurrency()->getOtherCurrencyTotalItbis()->getValue() : $ecf->getHeader()->getTotals()->getTotalItbis()->getValue(),2),
             ];
         }
 
@@ -486,27 +514,53 @@ class PDF
             $tipTotal = 0;
             $otherTotal = 0;
 
-            foreach ($ecf->getHeader()->getTotals()->getAdditionalTaxesTable()->getAdditionalTaxes() as $additionalTax) {
-                if ($additionalTax->getSpecificConsumptionTaxAmount()) {
-                    $iscTotal += $additionalTax->getSpecificConsumptionTaxAmount()->getValue();
+            if($hasOtherCurrency) {
+                foreach ($ecf->getHeader()->getOtherCurrency()->getOtherCurrencyAdditionalTaxesTable()->getOtherCurrencyAdditionalTaxes() as $otherAdditionalTax) {
+                    if ($otherAdditionalTax->getOtherCurrencySpecificConsumptionTaxAmount()) {
+                        $iscTotal += $otherAdditionalTax->getOtherCurrencySpecificConsumptionTaxAmount()->getValue();
+                    }
+                    if ($otherAdditionalTax->getOtherCurrencyAdValoremConsumptionTaxAmount()) {
+                        $iscTotal += $otherAdditionalTax->getOtherCurrencyAdValoremConsumptionTaxAmount()->getValue();
+                    }
+                    if ($otherAdditionalTax->getOtherCurrencyOtherAdditionalTaxes()) {
+                        switch ($otherAdditionalTax->getOtherCurrencyTaxType()->getValue()) {
+                            case AdditionalTaxType::LEGAL_TIP:
+                                $tipTotal += $otherAdditionalTax->getOtherCurrencyOtherAdditionalTaxes()->getValue();
+                                break;
+                            case AdditionalTaxType::CDT:
+                                $cdtTotal += $otherAdditionalTax->getOtherCurrencyOtherAdditionalTaxes()->getValue();
+                                break;
+                            default:
+                                $otherTotal *= $otherAdditionalTax->getOtherCurrencyOtherAdditionalTaxes()->getValue();
+                                break;
+                        }
+                    }
                 }
-                if ($additionalTax->getAdValoremConsumptionTaxAmount()) {
-                    $iscTotal += $additionalTax->getAdValoremConsumptionTaxAmount()->getValue();
-                }
-                if ($additionalTax->getOtherAdditionalTaxes()) {
-                    switch ($additionalTax->getTaxType()->getValue()) {
-                        case AdditionalTaxType::LEGAL_TIP:
-                            $tipTotal += $additionalTax->getOtherAdditionalTaxes()->getValue();
-                            break;
-                        case AdditionalTaxType::CDT:
-                            $cdtTotal += $additionalTax->getOtherAdditionalTaxes()->getValue();
-                            break;
-                        default:
-                            $otherTotal *= $additionalTax->getOtherAdditionalTaxes()->getValue();
-                            break;
+            } else {
+                foreach ($ecf->getHeader()->getTotals()->getAdditionalTaxesTable()->getAdditionalTaxes() as $additionalTax) {
+                    if ($additionalTax->getSpecificConsumptionTaxAmount()) {
+                        $iscTotal += $additionalTax->getSpecificConsumptionTaxAmount()->getValue();
+                    }
+                    if ($additionalTax->getAdValoremConsumptionTaxAmount()) {
+                        $iscTotal += $additionalTax->getAdValoremConsumptionTaxAmount()->getValue();
+                    }
+                    if ($additionalTax->getOtherAdditionalTaxes()) {
+                        switch ($additionalTax->getTaxType()->getValue()) {
+                            case AdditionalTaxType::LEGAL_TIP:
+                                $tipTotal += $additionalTax->getOtherAdditionalTaxes()->getValue();
+                                break;
+                            case AdditionalTaxType::CDT:
+                                $cdtTotal += $additionalTax->getOtherAdditionalTaxes()->getValue();
+                                break;
+                            default:
+                                $otherTotal *= $additionalTax->getOtherAdditionalTaxes()->getValue();
+                                break;
+                        }
                     }
                 }
             }
+
+
             if ($iscTotal != 0) {
                 $totals[] = [
                     'name' => 'Total ISC',
@@ -539,7 +593,7 @@ class PDF
 
         $totals[] = [
             'name' => 'Total',
-            'value' => number_format($ecf->getHeader()->getTotals()->getTotalAmount()->getValue(),2),
+            'value' => number_format($hasOtherCurrency ? $ecf->getHeader()->getOtherCurrency()->getOtherCurrencyTotalAmount()->getValue() : $ecf->getHeader()->getTotals()->getTotalAmount()->getValue(),2),
         ];
 
         return $totals;

@@ -89,7 +89,7 @@
                     {% for entry in totals %}
                         <tr>
                             <td style="width: 40mm; text-align:right;"><b>{{entry.name}}:</b></td>
-                            <td style="width: 43mm;border: 1px solid #444; text-align:right;background: #eee;">{{entry.value}}</td>
+                            <td style="width: 43mm;border: 1px solid #444; text-align:right;background: #eee;">{{entry.value}} {{otherCurrency}}</td>
                         </tr>
                     {% endfor %}
                     {# <tr>

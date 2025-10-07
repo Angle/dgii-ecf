@@ -382,6 +382,33 @@ class Item extends ECFNode
         }
     }
 
+    public function getItbisOtherCurrency($exchangeRate, $additionalTaxRates = []): ?string
+    {
+        //TODO: Assert these
+        if(!$this->billingIndicator) return null;
+        if(!$this->itemAmount) return null;
+
+        if($this->billingIndicator->getValue() == BillingIndicator::EXEMPT) return null;
+        if($this->billingIndicator->getValue() == BillingIndicator::NOT_BILLED) return null;
+
+        switch($this->billingIndicator->getValue()) {
+            case BillingIndicator::ITBIS1:
+                //For itbis 1, we must add ISCspecific and ISCadValorem to the base amount
+                $taxableAmount = $this->getOtherCurrencyDetails()->getOtherCurrencyItemAmount()->getValue();
+                $iscSpecific = $this->getIscSpecific($additionalTaxRates);
+                $iscAdValorem =$this->getIscAdValorem($additionalTaxRates);
+                if($iscSpecific != null) $taxableAmount = Math::add($taxableAmount, Math::round(Math::div($iscSpecific,$exchangeRate),2));
+                if($iscAdValorem != null) $taxableAmount = Math::add($taxableAmount,  Math::round(Math::div($iscAdValorem, $exchangeRate),2));
+                return Math::round(Math::mul(TaxType::getRate(TaxType::ITBIS_1), $taxableAmount), 2);
+            case BillingIndicator::ITBIS2:
+                return Math::round(Math::mul(TaxType::getRate(TaxType::ITBIS_2), $this->getOtherCurrencyDetails()->getOtherCurrencyItemAmount()->getValue()), 2);
+            case BillingIndicator::ITBIS3:
+                return Math::round(Math::mul(TaxType::getRate(TaxType::ITBIS_3), $this->getOtherCurrencyDetails()->getOtherCurrencyItemAmount()->getValue()), 2);
+            default:
+                return null;
+        }
+    }
+
     public function getIscSpecific($additionalTaxRates = []): ?string
     {
         if(!$this->additionalTaxTable) return null;
