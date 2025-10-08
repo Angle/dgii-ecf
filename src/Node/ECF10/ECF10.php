@@ -1138,7 +1138,8 @@ class ECF10 extends ECFNode implements ECFInterface
                     $itbisTotalTaxableAmount = Math::add($itbisTotalTaxableAmount, $pageItbis1TaxableAmount);
 
                     //Now we calculate the rounded amount
-                    $itbis1Amount = Math::round(Math::mul(CatalogTaxType::getRate(CatalogTaxType::ITBIS_1), $pageItbis1TaxableAmount),2);
+                    $itbis1Amount = Math::mul(Math::add($pageItbis1TaxableAmount, $iscAmount), CatalogTaxType::getRate(CatalogTaxType::ITBIS_1));
+                    $itbis1Amount = Math::round($itbis1Amount, 2);
 
                     //Now we set the rounded taxed amount node
                     $page->setPageItbisT1(PageItbisT1::newWithValue($itbis1Amount));
