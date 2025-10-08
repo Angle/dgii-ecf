@@ -12,6 +12,11 @@ use DOMText;
 class DiscountOrSurchargeBillingIndicator extends ECFNode
 {
     const NODE_NAME = "IndicadorFacturacionDescuentooRecargo";
+    const ITBIS1 = 1;
+    const ITBIS2 = 2;
+    const ITBIS3 = 3;
+    const EXEMPT = 4;
+
     protected static $baseAttributes = [];
     protected static $attributes = [];
     protected static $children = [];

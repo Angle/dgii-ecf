@@ -12,6 +12,9 @@ use DOMText;
 class ValueType extends ECFNode
 {
     const NODE_NAME = "TipoValor";
+    const PERCENTAGE = "%";
+    const AMOUNT = "$";
+
     protected static $baseAttributes = [];
     protected static $attributes = [];
     protected static $children = [];

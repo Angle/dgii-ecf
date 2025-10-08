@@ -9,6 +9,7 @@ use Angle\ECF\Catalog\UnitType;
 use Angle\ECF\ECFNode;
 use Angle\ECF\ECFException;
 use Angle\ECF\ECFInterface;
+use Angle\ECF\Node\ECF10\DiscountsOrSurcharges\DiscountOrSurcharge\DiscountOrSurchargeBillingIndicator;
 use Angle\ECF\Node\ECF10\Header\DocId\TotalPages;
 use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyAdditionalTaxesTable;
 use Angle\ECF\Node\ECF10\Header\OtherCurrency\OtherCurrencyAdditionalTaxesTable\OtherCurrencyAdditionalTax;
@@ -483,7 +484,13 @@ class ECF10 extends ECFNode implements ECFInterface
         if ($itbis1TaxableAmount != 0) {
             $hasItbis = true;
 
-            //First lets round to 2 decimals
+            //Lets modify with the appropriate Discounts and Surcharges if any
+            if($this?->getDiscountsOrSurcharges()) {
+                $discountAndSurchargeAmount = $this->getDiscountsOrSurcharges()->getDiscountAndSurchargeAmount(DiscountOrSurchargeBillingIndicator::ITBIS1);
+                $itbis1TaxableAmount = Math::add($itbis1TaxableAmount, $discountAndSurchargeAmount);
+            }
+
+            //Lets round to 2 decimals
             $itbis1TaxableAmount = Math::round($itbis1TaxableAmount,2);
 
             //Add rate node
@@ -507,7 +514,13 @@ class ECF10 extends ECFNode implements ECFInterface
         if ($itbis2TaxableAmount != 0) {
             $hasItbis = true;
 
-            //First lets round to 2 decimals
+            //Lets modify with the appropriate Discounts and Surcharges if any
+            if($this?->getDiscountsOrSurcharges()) {
+                $discountAndSurchargeAmount = $this->getDiscountsOrSurcharges()->getDiscountAndSurchargeAmount(DiscountOrSurchargeBillingIndicator::ITBIS2);
+                $itbis2TaxableAmount = Math::add($itbis2TaxableAmount, $discountAndSurchargeAmount);
+            }
+
+            //Lets round to 2 decimals
             $itbis2TaxableAmount = Math::round($itbis2TaxableAmount,2);
 
             //Add rate node
@@ -531,7 +544,13 @@ class ECF10 extends ECFNode implements ECFInterface
         if ($itbis3TaxableAmount != 0) {
             $hasItbis = true;
 
-            //First lets round to 2 decimals
+            //Lets modify with the appropriate Discounts and Surcharges if any
+            if($this?->getDiscountsOrSurcharges()) {
+                $discountAndSurchargeAmount = $this->getDiscountsOrSurcharges()->getDiscountAndSurchargeAmount(DiscountOrSurchargeBillingIndicator::ITBIS3);
+                $itbis3TaxableAmount = Math::add($itbis3TaxableAmount, $discountAndSurchargeAmount);
+            }
+
+            //Lets round to 2 decimals
             $itbis3TaxableAmount = Math::round($itbis3TaxableAmount,2);
 
             //Add rate node
@@ -565,6 +584,13 @@ class ECF10 extends ECFNode implements ECFInterface
         }
 
         if ($exemptAmount != 0) {
+            //Lets modify with the appropriate Discounts and Surcharges if any
+            if($this?->getDiscountsOrSurcharges()) {
+                $discountAndSurchargeAmount = $this->getDiscountsOrSurcharges()->getDiscountAndSurchargeAmount(DiscountOrSurchargeBillingIndicator::EXEMPT);
+                $exemptAmount = Math::add($exemptAmount, $discountAndSurchargeAmount);
+            }
+
+            //Lets round to 2 decimals
             $totals->setExemptAmount(ExemptAmount::newWithValue($exemptAmount));
         }
 

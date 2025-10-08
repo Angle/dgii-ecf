@@ -12,6 +12,9 @@ use DOMText;
 class AdjustmentType extends ECFNode
 {
     const NODE_NAME = "TipoAjuste";
+    const DISCOUNT = "D";
+    const SURCHARGE = "R";
+
     protected static $baseAttributes = [];
     protected static $attributes = [];
     protected static $children = [];

@@ -5,7 +5,8 @@ namespace Angle\ECF\Node\ECF10;
 use Angle\ECF\ECFNode;
 use Angle\ECF\ECFException;
 use Angle\ECF\Node\ECF10\DiscountsOrSurcharges\DiscountOrSurcharge;
-
+use Angle\ECF\Node\ECF10\DiscountsOrSurcharges\DiscountOrSurcharge\AdjustmentType;
+use Angle\ECF\Utility\Math;
 use DateTime;
 
 use DOMDocument;
@@ -23,6 +24,7 @@ class DiscountsOrSurcharges extends ECFNode
     #########################
 
     const NODE_NAME = "DescuentosORecargos";
+
 
     protected static $baseAttributes = [];
 
@@ -101,6 +103,45 @@ class DiscountsOrSurcharges extends ECFNode
         // TODO: implement the full set of validation, including type and Business Logic
 
         return true;
+    }
+
+
+    #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public function getDiscountAndSurchargeAmount($indicator)
+    {
+        $amount = '0';
+        foreach($this->discountOrSurcharge as $ds) {
+            if($ds->getDiscountOrSurchargeBillingIndicator()->getValue() == $indicator) {
+                if($ds->getAdjustmentType()->getValue() == AdjustmentType::DISCOUNT) {
+                    $amount = Math::sub($amount, $ds->getDiscountOrSurchargeAmount()->getValue());
+                } else if($ds->getAdjustmentType()->getValue() == AdjustmentType::SURCHARGE) {
+                    $amount = Math::add($amount, $ds->getDiscountOrSurchargeAmount()->getValue());
+                } else {
+                    //TODO: throw Exception
+                }
+            }
+        }
+        return $amount;
+    }
+
+    public function getDiscountAndSurchargeAmountOtherCurrency($indicator)
+    {
+        $amount = '0';
+        foreach($this->discountOrSurcharge as $ds) {
+            if($ds->getDiscountOrSurchargeBillingIndicator()->getValue() == $indicator) {
+                if($ds->getAdjustmentType()->getValue() == AdjustmentType::DISCOUNT) {
+                    $amount = Math::sub($amount, $ds->getDiscountOrSurchargeAmountOtherCurrency()->getValue());
+                } else if($ds->getAdjustmentType()->getValue() == AdjustmentType::SURCHARGE) {
+                    $amount = Math::add($amount, $ds->getDiscountOrSurchargeAmountOtherCurrency()->getValue());
+                } else {
+                    //TODO: throw Exception
+                }
+            }
+        }
+        return $amount;
     }
 
 
