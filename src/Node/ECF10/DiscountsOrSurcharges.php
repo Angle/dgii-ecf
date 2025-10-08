@@ -4,6 +4,7 @@ namespace Angle\ECF\Node\ECF10;
 
 use Angle\ECF\ECFNode;
 use Angle\ECF\ECFException;
+use Angle\ECF\Node\ECF10\DiscountsOrSurcharges\DiscountOrSurcharge;
 
 use DateTime;
 
@@ -33,14 +34,20 @@ class DiscountsOrSurcharges extends ECFNode
     protected static $attributes = [];
 
     protected static $children = [
-        // PropertyName => ClassName (full namespace)
+        'discountOrSurcharge' => [
+            'keywords' => ['DescuentoORecargo', 'discountOrSurcharge'],
+            'class' => DiscountOrSurcharge::class,
+            'type' => ECFNode::CHILD_ARRAY,
+        ],
     ];
-
 
 
     #########################
     ##      PROPERTIES     ##
     #########################
+
+    /** @var DiscountOrSurcharge[] */
+    protected $discountOrSurcharge = [];
 
 
     #########################
@@ -54,7 +61,18 @@ class DiscountsOrSurcharges extends ECFNode
      */
     public function setChildrenFromDOMNodes(array $children): void
     {
-        // void
+        foreach ($children as $node) {
+            if ($node instanceof DOMText) {
+                continue;
+            }
+
+            switch ($node->localName) {
+                case DiscountOrSurcharge::NODE_NAME:
+                    $item = DiscountOrSurcharge::createFromDomNode($node);
+                    $this->addDiscountOrSurcharge($item);
+                    break;
+            }
+        }
     }
 
 
@@ -66,12 +84,9 @@ class DiscountsOrSurcharges extends ECFNode
     {
         $node = $dom->createElement(self::NODE_NAME);
 
-        foreach ($this->getAttributes() as $attr => $value) {
-            $node->setAttribute($attr, $value);
+        foreach ($this->discountOrSurcharge as $item) {
+            $node->appendChild($item->toDOMElement($dom));
         }
-
-
-        // no child nodes for DiscountsOrSurcharges
 
         return $node;
     }
@@ -93,4 +108,20 @@ class DiscountsOrSurcharges extends ECFNode
     ## GETTERS AND SETTERS ##
     #########################
 
+    public function getDiscountOrSurcharge(): ?array
+    {
+        return $this->discountOrSurcharge;
+    }
+
+    public function setDiscountOrSurcharge(array $discountOrSurcharge): self
+    {
+        $this->discountOrSurcharge = $discountOrSurcharge;
+        return $this;
+    }
+
+    public function addDiscountOrSurcharge(DiscountOrSurcharge $discountOrSurcharge): self
+    {
+        $this->discountOrSurcharge[] = $discountOrSurcharge;
+        return $this;
+    }
 }
