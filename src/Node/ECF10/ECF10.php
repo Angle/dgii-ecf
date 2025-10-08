@@ -1074,9 +1074,9 @@ class ECF10 extends ECFNode implements ECFInterface
                 $page->setLineFrom(LineFrom::newWithValue($lineFrom));
                 $page->setLineTo(LineTo::newWithValue($lineTo));
 
-                $itbis1TaxableAmount = 0;
-                $itbis2TaxableAmount = 0;
-                $itbis3TaxableAmount = 0;
+                $pageItbis1TaxableAmount = 0;
+                $pageItbis2TaxableAmount = 0;
+                $pageItbis3TaxableAmount = 0;
 
                 $notBilledAmount = 0;
                 $exemptAmount = 0;
@@ -1091,13 +1091,13 @@ class ECF10 extends ECFNode implements ECFInterface
                             $notBilledAmount = Math::add($notBilledAmount, $itemDetails->getItemAmount()->getValue());
                             break;
                         case BillingIndicator::ITBIS1:
-                            $itbis1TaxableAmount = Math::add($itbis1TaxableAmount, $itemDetails->getItemAmount()->getValue());
+                            $pageItbis1TaxableAmount = Math::add($pageItbis1TaxableAmount, $itemDetails->getItemAmount()->getValue());
                             break;
                         case BillingIndicator::ITBIS2:
-                            $itbis2TaxableAmount = Math::add($itbis2TaxableAmount, $itemDetails->getItemAmount()->getValue());
+                            $pageItbis2TaxableAmount = Math::add($pageItbis2TaxableAmount, $itemDetails->getItemAmount()->getValue());
                             break;
                         case BillingIndicator::ITBIS3:
-                            $itbis3TaxableAmount = Math::add($itbis3TaxableAmount, $itemDetails->getItemAmount()->getValue());
+                            $pageItbis3TaxableAmount = Math::add($pageItbis3TaxableAmount, $itemDetails->getItemAmount()->getValue());
                             break;
                         case BillingIndicator::EXEMPT:
                             $exemptAmount = Math::add($exemptAmount, $itemDetails->getItemAmount()->getValue());
@@ -1109,7 +1109,7 @@ class ECF10 extends ECFNode implements ECFInterface
                     $iscAdValorem = $itemDetails->getIscAdValorem();
                     if($iscAdValorem != null) $iscAmount = Math::add($iscAmount, $iscAdValorem);
 
-                    //TODO: Other
+                    //TODO: Other Additional tax
                 }
 
                 //Set itbis1,2,3 taxable
@@ -1118,18 +1118,27 @@ class ECF10 extends ECFNode implements ECFInterface
                 //Set itbis total amount
                 $itbisTotalTaxableAmount = 0;
                 $itbisTotalAmount = 0;
-                if($itbis1TaxableAmount > 0) {
-                    //First we round to 2 decimals
-                    $itbis1TaxableAmount = Math::round($itbis1TaxableAmount,2);
+                if($pageItbis1TaxableAmount > 0) {
+                    if($this?->getDiscountsOrSurcharges() && $this->getItemDetails()->getTaxableAmount(BillingIndicator::ITBIS1) != '0') {
+                        //Calculate page discount by doing (totalDiscount * pageTaxableAmount) / totalTaxableAmount
+                        $totalTaxableAmount = $this->getItemDetails()->getTaxableAmount(BillingIndicator::ITBIS1);
+                        $totalDiscountAmount = $this->getDiscountsOrSurcharges()->getDiscountAndSurchargeAmount(DiscountOrSurchargeBillingIndicator::ITBIS1);
+                        $pageDiscountAmount = Math::div(Math::mul($totalDiscountAmount, $pageItbis1TaxableAmount), $totalTaxableAmount);
+
+                        $pageItbis1TaxableAmount = Math::add($pageItbis1TaxableAmount, $pageDiscountAmount);
+                    }
+
+                    //Lets round to 2 decimals
+                    $pageItbis1TaxableAmount = Math::round($pageItbis1TaxableAmount,2);
 
                     //Now we set it to its node
-                    $page->setPageTaxableAmountT1(PageTaxableAmountT1::newWithValue($itbis1TaxableAmount));
+                    $page->setPageTaxableAmountT1(PageTaxableAmountT1::newWithValue($pageItbis1TaxableAmount));
 
                     //Now we add it to the total taxable amount
-                    $itbisTotalTaxableAmount = Math::add($itbisTotalTaxableAmount, $itbis1TaxableAmount);
+                    $itbisTotalTaxableAmount = Math::add($itbisTotalTaxableAmount, $pageItbis1TaxableAmount);
 
                     //Now we calculate the rounded amount
-                    $itbis1Amount = Math::round(Math::mul(CatalogTaxType::getRate(CatalogTaxType::ITBIS_1), $itbis1TaxableAmount),2);
+                    $itbis1Amount = Math::round(Math::mul(CatalogTaxType::getRate(CatalogTaxType::ITBIS_1), $pageItbis1TaxableAmount),2);
 
                     //Now we set the rounded taxed amount node
                     $page->setPageItbisT1(PageItbisT1::newWithValue($itbis1Amount));
@@ -1137,18 +1146,27 @@ class ECF10 extends ECFNode implements ECFInterface
                     //And finally we add the taxed amount to the total taxed amount
                     $itbisTotalAmount = Math::add($itbisTotalAmount, $itbis1Amount);
                 }
-                if($itbis2TaxableAmount > 0) {
+                if($pageItbis2TaxableAmount > 0) {
+                    if($this?->getDiscountsOrSurcharges() && $this->getItemDetails()->getTaxableAmount(BillingIndicator::ITBIS2) != '0') {
+                        //Calculate page discount by doing (totalDiscount * pageTaxableAmount) / totalTaxableAmount
+                        $totalTaxableAmount = $this->getItemDetails()->getTaxableAmount(BillingIndicator::ITBIS2);
+                        $totalDiscountAmount = $this->getDiscountsOrSurcharges()->getDiscountAndSurchargeAmount(DiscountOrSurchargeBillingIndicator::ITBIS2);
+                        $pageDiscountAmount = Math::div(Math::mul($totalDiscountAmount, $pageItbis2TaxableAmount), $totalTaxableAmount);
+
+                        $pageItbis2TaxableAmount = Math::add($pageItbis2TaxableAmount, $pageDiscountAmount);
+                    }
+
                     //First we round to 2 decimals
-                    $itbis2TaxableAmount = Math::round($itbis2TaxableAmount,2);
+                    $pageItbis2TaxableAmount = Math::round($pageItbis2TaxableAmount,2);
 
                     //Now we set it to its node
-                    $page->setPageTaxableAmountT2(PageTaxableAmountT2::newWithValue($itbis2TaxableAmount));
+                    $page->setPageTaxableAmountT2(PageTaxableAmountT2::newWithValue($pageItbis2TaxableAmount));
 
                     //Now we add it to the total taxable amount
-                    $itbisTotalTaxableAmount = Math::add($itbisTotalTaxableAmount, $itbis2TaxableAmount);
+                    $itbisTotalTaxableAmount = Math::add($itbisTotalTaxableAmount, $pageItbis2TaxableAmount);
 
                     //Now we calculate the rounded amount
-                    $itbis2Amount = Math::round(Math::mul(CatalogTaxType::getRate(CatalogTaxType::ITBIS_2), $itbis2TaxableAmount),2);
+                    $itbis2Amount = Math::round(Math::mul(CatalogTaxType::getRate(CatalogTaxType::ITBIS_2), $pageItbis2TaxableAmount),2);
 
                     //Now we set the rounded taxed amount node
                     $page->setPageItbisT2(PageItbisT2::newWithValue($itbis2Amount));
@@ -1156,18 +1174,27 @@ class ECF10 extends ECFNode implements ECFInterface
                     //And finally we add the taxed amount to the total taxed amount
                     $itbisTotalAmount = Math::add($itbisTotalAmount, $itbis2Amount);
                 }
-                if($itbis3TaxableAmount > 0) {
+                if($pageItbis3TaxableAmount > 0) {
+                    if($this?->getDiscountsOrSurcharges() && $this->getItemDetails()->getTaxableAmount(BillingIndicator::ITBIS3) != '0') {
+                        //Calculate page discount by doing (totalDiscount * pageTaxableAmount) / totalTaxableAmount
+                        $totalTaxableAmount = $this->getItemDetails()->getTaxableAmount(BillingIndicator::ITBIS3);
+                        $totalDiscountAmount = $this->getDiscountsOrSurcharges()->getDiscountAndSurchargeAmount(DiscountOrSurchargeBillingIndicator::ITBIS3);
+                        $pageDiscountAmount = Math::div(Math::mul($totalDiscountAmount, $pageItbis3TaxableAmount), $totalTaxableAmount);
+
+                        $pageItbis3TaxableAmount = Math::add($pageItbis3TaxableAmount, $pageDiscountAmount);
+                    }
+
                     //First we round to 2 decimals
-                    $itbis3TaxableAmount = Math::round($itbis3TaxableAmount,2);
+                    $pageItbis3TaxableAmount = Math::round($pageItbis3TaxableAmount,2);
 
                     //Now we set it to its node
-                    $page->setPageTaxableAmountT3(PageTaxableAmountT3::newWithValue($itbis3TaxableAmount));
+                    $page->setPageTaxableAmountT3(PageTaxableAmountT3::newWithValue($pageItbis3TaxableAmount));
 
                     //Now we add it to the total taxable amount
-                    $itbisTotalTaxableAmount = Math::add($itbisTotalTaxableAmount, $itbis3TaxableAmount);
+                    $itbisTotalTaxableAmount = Math::add($itbisTotalTaxableAmount, $pageItbis3TaxableAmount);
 
                     //Now we calculate the rounded amount
-                    $itbis3Amount = Math::round(Math::mul(CatalogTaxType::getRate(CatalogTaxType::ITBIS_3), $itbis2TaxableAmount),2);
+                    $itbis3Amount = Math::round(Math::mul(CatalogTaxType::getRate(CatalogTaxType::ITBIS_3), $pageItbis3TaxableAmount),2);
 
                     //Now we set the rounded taxed amount node
                     $page->setPageItbisT3(PageItbisT3::newWithValue($itbis3Amount));
@@ -1186,6 +1213,14 @@ class ECF10 extends ECFNode implements ECFInterface
 
                 //Set exemptAmount if it exists
                 if($exemptAmount > 0) {
+                    if($this?->getDiscountsOrSurcharges() && $this->getItemDetails()->getTaxableAmount(BillingIndicator::EXEMPT) != '0') {
+                        //Calculate page discount by doing (totalDiscount * pageTaxableAmount) / totalTaxableAmount
+                        $totalTaxableAmount = $this->getItemDetails()->getTaxableAmount(BillingIndicator::EXEMPT);
+                        $totalDiscountAmount = $this->getDiscountsOrSurcharges()->getDiscountAndSurchargeAmount(DiscountOrSurchargeBillingIndicator::EXEMPT);
+                        $pageDiscountAmount = Math::div(Math::mul($totalDiscountAmount, $exemptAmount), $totalTaxableAmount);
+
+                        $exemptAmount = Math::add($exemptAmount, $pageDiscountAmount);
+                    }
                     $exemptAmount = Math::round($exemptAmount,2);
                     $page->setPageExemptAmount(PageExemptAmount::newWithValue($exemptAmount));
                 }
@@ -1195,7 +1230,6 @@ class ECF10 extends ECFNode implements ECFInterface
                     $page->setPageNonBillableAmount(PageNonBillableAmount::newWithValue($notBilledAmount));
                 }
 
-                //TODO: Other additional amount
                 $totalAdditionalTaxAmount = 0;
                 if($iscAmount > 0 || $otherAdditionalTaxAmount > 0) {
                     $additionalTaxTable = new SubtotalAdditionalTax([]);

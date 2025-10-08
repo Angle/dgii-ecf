@@ -5,6 +5,7 @@ namespace Angle\ECF\Node\ECF10;
 use Angle\ECF\ECFNode;
 use Angle\ECF\ECFException;
 use Angle\ECF\Node\ECF10\ItemDetails\Item;
+use Angle\ECF\Utility\Math;
 use DateTime;
 
 use DOMDocument;
@@ -106,6 +107,29 @@ class ItemDetails extends ECFNode
         return true;
     }
 
+
+    #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+
+    public function getTaxableAmount(string $indicator, int $lineFrom = 1, ?int $lineTo = null) {
+        if($lineTo == null) $lineTo = count($this->items);
+
+        $itemsByLineNumber = [];
+        foreach($this->items as $i) {
+            $itemsByLineNumber[$i->getLineNumber()->getValue()] = $i;
+        }
+
+        $amount = '0';
+        for($i = $lineFrom; $i <= $lineTo; $i++) {
+            if($itemsByLineNumber[$i]->getBillingIndicator()->getValue() == $indicator) {
+                $amount = Math::add($amount, $itemsByLineNumber[$i]->getItemAmount()->getValue());
+            }
+        }
+
+        return $amount;
+    }
 
     #########################
     ## GETTERS AND SETTERS ##
