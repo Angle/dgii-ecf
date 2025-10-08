@@ -130,33 +130,34 @@ class DiscountOrSurcharge extends ECFNode
     {
         foreach ($children as $node) {
             if ($node instanceof DOMText) continue;
+
             switch ($node->localName) {
                 case 'NumeroLinea':
-                    $this->setLineNumber($node->nodeValue);
+                    $this->setLineNumber(LineNumber::createFromDOMNode($node));
                     break;
                 case 'TipoAjuste':
-                    $this->setAdjustmentType($node->nodeValue);
+                    $this->setAdjustmentType(AdjustmentType::createFromDOMNode($node));
                     break;
                 case 'IndicadorNorma1007':
-                    $this->setIndicatorNorma1007($node->nodeValue);
+                    $this->setNorm1007Indicator(Norm1007Indicator::createFromDOMNode($node));
                     break;
                 case 'DescripcionDescuentooRecargo':
-                    $this->setDescription($node->nodeValue);
+                    $this->setDiscountOrSurchargeDescription(DiscountOrSurchargeDescription::createFromDOMNode($node));
                     break;
                 case 'TipoValor':
-                    $this->setValueType($node->nodeValue);
+                    $this->setValueType(ValueType::createFromDOMNode($node));
                     break;
                 case 'ValorDescuentooRecargo':
-                    $this->setValue($node->nodeValue);
+                    $this->setDiscountOrSurchargeValue(DiscountOrSurchargeValue::createFromDOMNode($node));
                     break;
                 case 'MontoDescuentooRecargo':
-                    $this->setAmount($node->nodeValue);
+                    $this->setDiscountOrSurchargeAmount(DiscountOrSurchargeAmount::createFromDOMNode($node));
                     break;
                 case 'MontoDescuentooRecargoOtraMoneda':
-                    $this->setAmountOtherCurrency($node->nodeValue);
+                    $this->setDiscountOrSurchargeAmountOtherCurrency(DiscountOrSurchargeAmountOtherCurrency::createFromDOMNode($node));
                     break;
                 case 'IndicadorFacturacionDescuentooRecargo':
-                    $this->setInvoicingIndicator($node->nodeValue);
+                    $this->setDiscountOrSurchargeBillingIndicator(DiscountOrSurchargeBillingIndicator::createFromDOMNode($node));
                     break;
             }
         }
@@ -169,16 +170,36 @@ class DiscountOrSurcharge extends ECFNode
 
     public function toDOMElement(DOMDocument $dom): DOMElement
     {
-        $node = $dom->createElement(self::NODE_NAME);
-        if ($this->lineNumber) $node->appendChild($dom->createElement('NumeroLinea', $this->lineNumber));
-        if ($this->adjustmentType) $node->appendChild($dom->createElement('TipoAjuste', $this->adjustmentType));
-        if ($this->indicatorNorma1007) $node->appendChild($dom->createElement('IndicadorNorma1007', $this->indicatorNorma1007));
-        if ($this->description) $node->appendChild($dom->createElement('DescripcionDescuentooRecargo', $this->description));
-        if ($this->valueType) $node->appendChild($dom->createElement('TipoValor', $this->valueType));
-        if ($this->value) $node->appendChild($dom->createElement('ValorDescuentooRecargo', $this->value));
-        if ($this->amount) $node->appendChild($dom->createElement('MontoDescuentooRecargo', $this->amount));
-        if ($this->amountOtherCurrency) $node->appendChild($dom->createElement('MontoDescuentooRecargoOtraMoneda', $this->amountOtherCurrency));
-        if ($this->invoicingIndicator) $node->appendChild($dom->createElement('IndicadorFacturacionDescuentooRecargo', $this->invoicingIndicator));
+$node = $dom->createElement(self::NODE_NAME);
+
+        if ($this->lineNumber) {
+            $node->appendChild($this->lineNumber->toDOMElement($dom));
+        }
+        if ($this->adjustmentType) {
+            $node->appendChild($this->adjustmentType->toDOMElement($dom));
+        }
+        if ($this->norm1007Indicator) {
+            $node->appendChild($this->norm1007Indicator->toDOMElement($dom));
+        }
+        if ($this->discountOrSurchargeDescription) {
+            $node->appendChild($this->discountOrSurchargeDescription->toDOMElement($dom));
+        }
+        if ($this->valueType) {
+            $node->appendChild($this->valueType->toDOMElement($dom));
+        }
+        if ($this->discountOrSurchargeValue) {
+            $node->appendChild($this->discountOrSurchargeValue->toDOMElement($dom));
+        }
+        if ($this->discountOrSurchargeAmount) {
+            $node->appendChild($this->discountOrSurchargeAmount->toDOMElement($dom));
+        }
+        if ($this->discountOrSurchargeAmountOtherCurrency) {
+            $node->appendChild($this->discountOrSurchargeAmountOtherCurrency->toDOMElement($dom));
+        }
+        if ($this->discountOrSurchargeBillingIndicator) {
+            $node->appendChild($this->discountOrSurchargeBillingIndicator->toDOMElement($dom));
+        }
+
         return $node;
     }
 
