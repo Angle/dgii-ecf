@@ -86,9 +86,9 @@ class PDF
             "size" => 12,
             "textAlign" => "right",
         ],
-        self::AMOUNT => [
-            "name" => "Valor",
-            "size" => 13,
+        self::DISCOUNT => [
+            "name" => "Descuento",
+            "size" => 9,
             "textAlign" => "right",
         ],
         self::RECHARGE => [
@@ -96,9 +96,9 @@ class PDF
             "size" => 9,
             "textAlign" => "right",
         ],
-        self::DISCOUNT => [
-            "name" => "Descuento",
-            "size" => 9,
+        self::AMOUNT => [
+            "name" => "Valor",
+            "size" => 13,
             "textAlign" => "right",
         ]
     ];
@@ -411,8 +411,31 @@ class PDF
                 $total = Math::add($total, $itbis);
             }
 
-            //discount
-            //recharge
+            if($hasOtherCurrency) {
+                if($item?->getOtherCurrencyDetails()?->getOtherCurrencyDiscount()) {
+                    $discount = number_format(Math::round($item->getOtherCurrencyDetails()->getOtherCurrencyDiscount()->getValue(),2),2);
+                    $i[self::DISCOUNT] = '-' . $discount;
+                }
+            } else {
+                if($item?->getDiscountAmount()) {
+                    $discount = number_format(Math::round($item->getDiscountAmount()->getValue(),2),2);
+                    $i[self::DISCOUNT] = '-' . $discount;
+                }
+            }
+
+            if($hasOtherCurrency) {
+                if($item?->getOtherCurrencyDetails()?->getOtherCurrencySurcharge()) {
+                    $recharge = number_format(Math::round($item->getOtherCurrencyDetails()->getOtherCurrencySurcharge()->getValue(),2),2);
+                    $i[self::RECHARGE] = $recharge;
+
+                }
+            } else {
+                if($item?->getSurchargeAmount()) {
+                    $recharge = number_format(Math::round($item->getSurchargeAmount()->getValue(),2),2);
+                    $i[self::RECHARGE] = $recharge;
+                }
+            }
+
             $i[self::AMOUNT] = number_format(Math::round($total,2),2);
             $itemsMatrix[] = $i;
         }

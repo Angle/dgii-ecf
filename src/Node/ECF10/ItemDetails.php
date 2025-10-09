@@ -113,7 +113,7 @@ class ItemDetails extends ECFNode
     #########################
 
 
-    public function getTaxableAmount(string $indicator, int $lineFrom = 1, ?int $lineTo = null) {
+    public function getTaxableAmount(?string $indicator = null, int $lineFrom = 1, ?int $lineTo = null) {
         if($lineTo == null) $lineTo = count($this->items);
 
         $itemsByLineNumber = [];
@@ -123,7 +123,7 @@ class ItemDetails extends ECFNode
 
         $amount = '0';
         for($i = $lineFrom; $i <= $lineTo; $i++) {
-            if($itemsByLineNumber[$i]->getBillingIndicator()->getValue() == $indicator) {
+            if($indicator == null || $itemsByLineNumber[$i]->getBillingIndicator()->getValue() == $indicator) {
                 $amount = Math::add($amount, $itemsByLineNumber[$i]->getItemAmount()->getValue());
             }
         }

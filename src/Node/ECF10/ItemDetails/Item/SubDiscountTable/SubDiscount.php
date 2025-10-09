@@ -5,10 +5,9 @@ namespace Angle\ECF\Node\ECF10\ItemDetails\Item\SubDiscountTable;
 use Angle\ECF\ECFNode;
 use Angle\ECF\ECFException;
 
-use Angle\ECF\Node\ECF10\ItemDetails\Item\SubDiscountTable\SubDiscount\DiscountType;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\SubDiscountTable\SubDiscount\DiscountPercentage;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\SubDiscountTable\SubDiscount\DiscountAmount;
-
+use Angle\ECF\Node\ECF10\ItemDetails\Item\SubDiscountTable\SubDiscount\SubDiscountType;
 use DOMDocument;
 use DOMElement;
 use DOMNode;
@@ -35,9 +34,9 @@ class SubDiscount extends ECFNode
     protected static $attributes = [];
 
     protected static $children = [
-        'discountType' => [
-            'keywords'  => ['TipoSubDescuento', 'discountType'],
-            'class'     => DiscountType::class,
+        'subDiscountType' => [
+            'keywords'  => ['TipoSubDescuento', 'subDiscountType'],
+            'class'     => SubDiscountType::class,
             'type'      => ECFNode::CHILD_UNIQUE,
         ],
         'discountPercentage' => [
@@ -57,8 +56,8 @@ class SubDiscount extends ECFNode
     ##      PROPERTIES     ##
     #########################
 
-    /** @var DiscountType */
-    protected $discountType;
+    /** @var SubDiscountType */
+    protected $subDiscountType;
 
     /** @var DiscountPercentage|null */
     protected $discountPercentage;
@@ -83,8 +82,8 @@ class SubDiscount extends ECFNode
             }
 
             switch ($node->localName) {
-                case DiscountType::NODE_NAME:
-                    $this->setDiscountType(DiscountType::createFromDOMNode($node));
+                case SubDiscountType::NODE_NAME:
+                    $this->setSubDiscountType(SubDiscountType::createFromDOMNode($node));
                     break;
                 case DiscountPercentage::NODE_NAME:
                     $this->setDiscountPercentage(DiscountPercentage::createFromDOMNode($node));
@@ -105,8 +104,8 @@ class SubDiscount extends ECFNode
     {
         $node = $dom->createElement(self::NODE_NAME);
 
-        if ($this->discountType) {
-            $node->appendChild($this->discountType->toDOMElement($dom));
+        if ($this->subDiscountType) {
+            $node->appendChild($this->subDiscountType->toDOMElement($dom));
         }
 
         if ($this->discountPercentage) {
@@ -136,14 +135,14 @@ class SubDiscount extends ECFNode
     ## GETTERS AND SETTERS ##
     #########################
 
-    public function getDiscountType(): ?DiscountType
+    public function getSubDiscountType(): ?SubDiscountType
     {
-        return $this->discountType;
+        return $this->subDiscountType;
     }
 
-    public function setDiscountType(DiscountType $discountType): self
+    public function setSubDiscountType(SubDiscountType $subDiscountType): self
     {
-        $this->discountType = $discountType;
+        $this->subDiscountType = $subDiscountType;
         return $this;
     }
 
