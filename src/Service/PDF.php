@@ -628,7 +628,7 @@ class PDF
                                 $cdtTotal += $otherAdditionalTax->getOtherCurrencyOtherAdditionalTaxes()->getValue();
                                 break;
                             default:
-                                $otherTotal *= $otherAdditionalTax->getOtherCurrencyOtherAdditionalTaxes()->getValue();
+                                $otherTotal += $otherAdditionalTax->getOtherCurrencyOtherAdditionalTaxes()->getValue();
                                 break;
                         }
                     }
@@ -650,7 +650,7 @@ class PDF
                                 $cdtTotal += $additionalTax->getOtherAdditionalTaxes()->getValue();
                                 break;
                             default:
-                                $otherTotal *= $additionalTax->getOtherAdditionalTaxes()->getValue();
+                                $otherTotal += $additionalTax->getOtherAdditionalTaxes()->getValue();
                                 break;
                         }
                     }
