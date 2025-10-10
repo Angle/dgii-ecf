@@ -14,7 +14,8 @@ use Angle\ECF\Node\ECF10\DiscountsOrSurcharges\DiscountOrSurcharge\DiscountOrSur
 use Angle\ECF\Node\ECF10\DiscountsOrSurcharges\DiscountOrSurcharge\DiscountOrSurchargeAmount;
 use Angle\ECF\Node\ECF10\DiscountsOrSurcharges\DiscountOrSurcharge\DiscountOrSurchargeAmountOtherCurrency;
 use Angle\ECF\Node\ECF10\DiscountsOrSurcharges\DiscountOrSurcharge\DiscountOrSurchargeBillingIndicator;
-
+use Angle\ECF\Node\ECF10\ItemDetails;
+use Angle\ECF\Utility\Math;
 use DOMDocument;
 use DOMElement;
 use DOMNode;
@@ -170,7 +171,7 @@ class DiscountOrSurcharge extends ECFNode
 
     public function toDOMElement(DOMDocument $dom): DOMElement
     {
-$node = $dom->createElement(self::NODE_NAME);
+        $node = $dom->createElement(self::NODE_NAME);
 
         if ($this->lineNumber) {
             $node->appendChild($this->lineNumber->toDOMElement($dom));
@@ -214,6 +215,40 @@ $node = $dom->createElement(self::NODE_NAME);
         return true;
     }
 
+
+    #########################
+    ##   SPECIAL METHODS   ##
+    #########################
+
+    public function getAmountProrated($lineFrom, $lineTo, ItemDetails $itemDetails) {
+        //Get Total taxable for indicator
+        //Get taxable for indicator in page
+        //Get total Discount amount
+        //return (totalDiscount * pageTaxableAmount) / totalTaxableAmount
+        $pageTaxableAmount = $itemDetails->getTaxableAmount($this->getDiscountOrSurchargeBillingIndicator()->getValue(), $lineFrom, $lineTo);
+        $totalTaxableAmount = $itemDetails->getTaxableAmount($this->getDiscountOrSurchargeBillingIndicator()->getValue());
+        $totalDiscountAmount = $this->getDiscountOrSurchargeAmount()->getValue();
+        if($totalTaxableAmount == '0')
+        {
+            return '0';
+        }
+        return Math::round(Math::div(Math::mul($totalDiscountAmount, $pageTaxableAmount), $totalTaxableAmount),2);
+    }
+
+    public function getAmountProratedOtherCurrency($lineFrom, $lineTo, ItemDetails $itemDetails) {
+        //Get Total taxable for indicator
+        //Get taxable for indicator in page
+        //Get total Discount amount
+        //return (totalDiscount * pageTaxableAmount) / totalTaxableAmount
+        $pageTaxableAmount = $itemDetails->getTaxableAmountOtherCurrency($this->getDiscountOrSurchargeAmount()->getValue(), $lineFrom, $lineTo);
+        $totalTaxableAmount = $itemDetails->getTaxableAmountOtherCurrency($this->getDiscountOrSurchargeBillingIndicator()->getValue());
+        $totalDiscountAmount = $this->getDiscountOrSurchargeAmountOtherCurrency()->getValue();
+        if($totalTaxableAmount == '0')
+        {
+            return '0';
+        }
+        return Math::round(Math::div(Math::mul($totalDiscountAmount, $pageTaxableAmount), $totalTaxableAmount),2);
+    }
 
     #########################
     ## GETTERS AND SETTERS ##

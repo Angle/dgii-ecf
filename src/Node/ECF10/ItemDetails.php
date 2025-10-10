@@ -131,6 +131,24 @@ class ItemDetails extends ECFNode
         return $amount;
     }
 
+    public function getTaxableAmountOtherCurrency(?string $indicator = null, int $lineFrom = 1, ?int $lineTo = null) {
+        if($lineTo == null) $lineTo = count($this->items);
+
+        $itemsByLineNumber = [];
+        foreach($this->items as $i) {
+            $itemsByLineNumber[$i->getLineNumber()->getValue()] = $i;
+        }
+
+        $amount = '0';
+        for($i = $lineFrom; $i <= $lineTo; $i++) {
+            if($indicator == null || $itemsByLineNumber[$i]->getBillingIndicator()->getValue() == $indicator) {
+                $amount = Math::add($amount, $itemsByLineNumber[$i]->getOtherCurrencyDetails()->getOtherCurrencyItemAmount()->getValue());
+            }
+        }
+
+        return $amount;
+    }
+
     #########################
     ## GETTERS AND SETTERS ##
     #########################

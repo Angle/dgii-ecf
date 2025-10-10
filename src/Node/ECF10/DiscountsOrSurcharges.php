@@ -149,6 +149,9 @@ class DiscountsOrSurcharges extends ECFNode
     ## GETTERS AND SETTERS ##
     #########################
 
+    /**
+     * @return DiscountOrSurcharge[]
+     */
     public function getDiscountOrSurcharge(): ?array
     {
         return $this->discountOrSurcharge;

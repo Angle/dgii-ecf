@@ -5,6 +5,7 @@ use Angle\ECF\Catalog\AdditionalTaxType;
 use Angle\ECF\Catalog\ECFType;
 use Angle\ECF\Catalog\TaxType;
 use Angle\ECF\Catalog\UnitType;
+use Angle\ECF\Node\ECF10\DiscountsOrSurcharges\DiscountOrSurcharge\AdjustmentType;
 use Angle\ECF\Node\ECF10\ECF10;
 use Angle\ECF\Node\ECF10\ItemDetails\Item;
 use Angle\ECF\Node\ECF10\ItemDetails\Item\BillingIndicator;
@@ -235,6 +236,43 @@ class PDF
             $totals = [];
             //If not the last page, get page totals
             if ($page->getPageNumber()->getValue() != $ecf->getHeader()->getDocId()->getTotalPages()->getValue()) {
+                //If we have a (global) discount or a recharge:
+                if($ecf->getDiscountsOrSurcharges()) {
+                    $totals[] = [
+                        'name' => 'Subtotal',
+                        'value' => number_format($hasOtherCurrency ? $ecf->getItemDetails()->getTaxableAmountOtherCurrency(null, $page->getLineFrom()->getValue(), $page->getLineTo()->getValue()) : $ecf->getItemDetails()->getTaxableAmount(null, $page->getLineFrom()->getValue(), $page->getLineTo()->getValue()),2),
+                    ];
+                    foreach($ecf->getDiscountsOrSurcharges()->getDiscountOrSurcharge() as $discountOrRecharge) {
+                        if($discountOrRecharge->getAdjustmentType()->getValue() == AdjustmentType::DISCOUNT) {
+                            $name = "Descuento";
+                        } elseif($discountOrRecharge->getAdjustmentType()->getValue() == AdjustmentType::SURCHARGE) {
+                            $name = "Recargo";
+                        }
+
+                        if($discountOrRecharge?->getDiscountOrSurchargeDescription()) {
+                            $name = $discountOrRecharge->getDiscountOrSurchargeDescription()->getValue();
+                        }
+
+                        //TODO: Get discount or surcharge PRORATED
+                        if($hasOtherCurrency) {
+                            $value = number_format($discountOrRecharge->getAmountProratedOtherCurrency($page->getlineFrom()->getValue(), $page->getLineTo()->getValue(), $ecf->getItemDetails()),2);
+                        } else {
+                            $value = number_format($discountOrRecharge->getAmountProrated($page->getlineFrom()->getValue(), $page->getLineTo()->getValue(), $ecf->getItemDetails()),2);
+                        }
+
+                        if($discountOrRecharge->getAdjustmentType()->getValue() == AdjustmentType::DISCOUNT) {
+                            $value = '-' . $value;
+                        }
+                        if($discountOrRecharge->getValueType()->getValue() == "%") {
+                            $value = "(" . number_format($discountOrRecharge->getDiscountOrSurchargeValue()->getValue(),2) . "%)" . $value;
+                        }
+
+                        $totals[] = [
+                            'name' => $name,
+                            'value' => $value,
+                        ];
+                    }
+                }
                 if ($page->getPageTotalTaxableAmount()) {
                     $totals [] = [
                         'name' => 'Subtotal Gravado Página',
@@ -392,7 +430,7 @@ class PDF
                 }
 
                 $i[self::ISC_SPECIFIC] = number_format(Math::round($iscSpecific,2),2);
-                $total = Math::add($total, $iscSpecific);
+                // $total = Math::add($total, $iscSpecific);
             }
 
             if ($iscAdValorem = $item->getIscAdValorem($ecf->getAdditionalTaxRates())) {
@@ -400,7 +438,7 @@ class PDF
                     $iscAdValorem = Math::div($iscAdValorem, $ecf->getHeader()->getOtherCurrency()->getExchangeRate()->getValue());
                 }
                 $i[self::ISC_AD_VALOREM] = number_format(Math::round($iscAdValorem,2),2);
-                $total = Math::add($total, $iscAdValorem);
+                // $total = Math::add($total, $iscAdValorem);
             }
             if($itbis = $item->getItbis($ecf->getAdditionalTaxRates())) {
                 if($hasOtherCurrency) {
@@ -408,7 +446,7 @@ class PDF
                 }
 
                 $i[self::ITBIS] = number_format($itbis,2);
-                $total = Math::add($total, $itbis);
+                // $total = Math::add($total, $itbis);
             }
 
             if($hasOtherCurrency) {
@@ -510,6 +548,42 @@ class PDF
         $hasOtherCurrency = $ecf?->getHeader()?->getOtherCurrency() != null;
 
         $totals = [];
+
+        //If we have a (global) discount or a recharge:
+        if($ecf->getDiscountsOrSurcharges()) {
+            $totals[] = [
+                'name' => 'Subtotal',
+                'value' => number_format($hasOtherCurrency ? $ecf->getItemDetails()->getTaxableAmountOtherCurrency() : $ecf->getItemDetails()->getTaxableAmount(), 2),
+            ];
+            foreach($ecf->getDiscountsOrSurcharges()->getDiscountOrSurcharge() as $discountOrRecharge) {
+                if($discountOrRecharge->getAdjustmentType()->getValue() == AdjustmentType::DISCOUNT) {
+                    $name = "Descuento";
+                } elseif($discountOrRecharge->getAdjustmentType()->getValue() == AdjustmentType::SURCHARGE) {
+                    $name = "Recargo";
+                }
+
+                if($discountOrRecharge?->getDiscountOrSurchargeDescription()) {
+                    $name = $discountOrRecharge->getDiscountOrSurchargeDescription()->getValue();
+                }
+
+                if($hasOtherCurrency) {
+                    $value = number_format($discountOrRecharge->getDiscountOrSurchargeAmountOtherCurrency()->getValue(),2);
+                } else {
+                    $value = number_format($discountOrRecharge->getDiscountOrSurchargeAmount()->getValue(),2);
+                }
+
+                if($discountOrRecharge->getAdjustmentType()->getValue() == AdjustmentType::DISCOUNT) {
+                    $value = '-' . $value;
+                }
+                if($discountOrRecharge->getValueType()->getValue() == "%") {
+                    $value = "(" . number_format($discountOrRecharge->getDiscountOrSurchargeValue()->getValue(),2) . "%)" . $value;
+                }
+                $totals[] = [
+                    'name' => $name,
+                    'value' => $value,
+                ];
+            }
+        }
 
         if ($ecf->getHeader()->getTotals()->getTotalTaxableAmount()) {
             $totals[] = [
